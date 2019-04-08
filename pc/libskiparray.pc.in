@@ -1,0 +1,11 @@
+prefix=@prefix@
+libdir=${prefix}/@libdir@
+includedir=${prefix}/include
+
+Name: skiparray
+Description: Unrolled skip list library for C
+Version: 0.1.0
+Requires:
+Libs: -L${libdir} -lskiparray
+Libs.private:
+Cflags: -I${includedir}
