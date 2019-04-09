@@ -14,6 +14,8 @@ assertion could fail in a 32-bit environment. (Reported by @acfoltzer.)
 Ensure that allocations are deterministically initialized, since the
 custom memory hook interface doesn't guarantee it.
 
+The SAN Makefile variable wasn't actually being used in build targets.
+
 ### Other Improvements
 
 None.

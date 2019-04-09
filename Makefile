@@ -18,9 +18,11 @@ CDEFS +=
 CINCS +=	-I${INCLUDE}
 CINCS +=	-I${VENDOR}
 CSTD +=		-std=c99
+CDEBUG =	-ggdb3
 
-CFLAGS +=	${CSTD} -ggdb3 ${WARN} ${CDEFS} ${CINCS} ${OPTIMIZE}
-LDFLAGS +=	-ggdb3
+CFLAGS +=	${CSTD} ${CDEBUG} ${OPTIMIZE} ${SAN}
+CFLAGS +=	${WARN} ${CDEFS} ${CINCS}
+LDFLAGS +=	${CDEBUG} ${SAN}
 
 TEST_CFLAGS_theft =	$(shell pkg-config --cflags libtheft)
 TEST_LDFLAGS_theft =	$(shell pkg-config --libs libtheft)
