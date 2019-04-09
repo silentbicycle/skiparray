@@ -11,6 +11,9 @@ None.
 Fixed an overflow bug in the `get_nonexistent` benchmark that meant an
 assertion could fail in a 32-bit environment. (Reported by @acfoltzer.)
 
+Ensure that allocations are deterministically initialized, since the
+custom memory hook interface doesn't guarantee it.
+
 ### Other Improvements
 
 None.

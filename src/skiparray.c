@@ -40,6 +40,7 @@ skiparray_new(struct skiparray_config *config,
       max_level * sizeof(struct node *);
     struct skiparray *res = mem(NULL, alloc_size, config->udata);
     if (res == NULL) { return SKIPARRAY_NEW_ERROR_NULL; }
+    memset(res, 0x00, alloc_size);
 
     uint64_t prng_state = 0;
     uint8_t root_level = level(config->seed, &prng_state, config->udata) + 1;
@@ -812,12 +813,15 @@ node_alloc(uint8_t height, uint16_t node_size,
       height * sizeof(struct node *);
     res = mem(NULL, alloc_size, udata);
     if (res == NULL) { goto cleanup; }
+    memset(res, 0x00, alloc_size);
 
     keys = mem(NULL, node_size * sizeof(keys[0]), udata);
     if (keys == NULL) { goto cleanup; }
+    memset(keys, 0x00, node_size * sizeof(keys[0]));
 
     values = mem(NULL, node_size * sizeof(values[0]), udata);
-    if (keys == NULL) { goto cleanup; }
+    if (values == NULL) { goto cleanup; }
+    memset(values, 0x00, node_size * sizeof(values[0]));
 
     struct node fields = {
         .height = height,
