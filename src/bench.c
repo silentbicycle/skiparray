@@ -552,7 +552,9 @@ static struct benchmark benchmarks[] = {
 
 static void *
 memory_cb(void *p, size_t size, void *udata) {
-    uint64_t *word_aligned = NULL;
+    /* Do a word-aligned allocation, and save the size immediately
+     * before the memory allocated for the caller. */
+    uintptr_t *word_aligned = NULL;
     (void)udata;
     if (p != NULL) {
         assert(size == 0);      /* no realloc used */

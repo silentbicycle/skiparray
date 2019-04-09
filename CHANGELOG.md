@@ -16,6 +16,9 @@ custom memory hook interface doesn't guarantee it.
 
 The SAN Makefile variable wasn't actually being used in build targets.
 
+Portability: Use `uintptr_t`, not `uint64_t`, for word-aligned
+allocation during memory benchmarking.
+
 ### Other Improvements
 
 Added `cppcheck` target to the Makefile.
