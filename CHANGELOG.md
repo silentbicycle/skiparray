@@ -16,6 +16,8 @@ custom memory hook interface doesn't guarantee it.
 
 The SAN Makefile variable wasn't actually being used in build targets.
 
+Added `cppcheck` target to the Makefile.
+
 ### Other Improvements
 
 None.
