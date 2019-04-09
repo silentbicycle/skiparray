@@ -31,7 +31,7 @@ get_usec_delta(struct timeval *pre, struct timeval *post) {
         size_t usec_delta = get_usec_delta(&timer_##n1, &timer_##n2);   \
         double usec_per = usec_delta / (double)limit;                   \
         double per_second = usec_per_sec / usec_per;                    \
-        printf("%-30s limit %zd %9.3f msec, %6.3f usec per, "           \
+        printf("%-30s limit %zu %9.3f msec, %6.3f usec per, "           \
             "%11.3f K ops/sec",                                         \
             label, limit, usec_delta / (double)msec_per_sec,            \
             usec_per, per_second / 1000);                               \
@@ -495,7 +495,6 @@ sum_partway(void) {
     }
 
     TIME(pre);
-    uintptr_t total = 0;
 
     struct skiparray_iter *iter = NULL;
     if (SKIPARRAY_ITER_NEW_OK != skiparray_iter_new(sa, &iter)) {
@@ -512,7 +511,7 @@ sum_partway(void) {
     do {
         void *k, *v;
         skiparray_iter_get(iter, &k, &v);
-        total += (uintptr_t)v;
+        (void)v;
     } while (skiparray_iter_next(iter) == SKIPARRAY_ITER_STEP_OK);
 
     skiparray_iter_free(iter);

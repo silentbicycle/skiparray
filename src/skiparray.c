@@ -67,12 +67,12 @@ skiparray_new(struct skiparray_config *config,
 
     for (size_t i = 0; i < root_level; i++) {
         res->nodes[i] = root;
-        LOG(4, "%s: res->nodes[%zd]: %p\n",
+        LOG(4, "%s: res->nodes[%zu]: %p\n",
             __func__, i, (void *)res->nodes[i]);
     }
     for (size_t i = root_level; i < max_level; i++) {
         res->nodes[i] = NULL;
-        LOG(4, "%s: res->nodes[%zd]: %p\n",
+        LOG(4, "%s: res->nodes[%zu]: %p\n",
             __func__, i, (void *)res->nodes[i]);
     }
 
@@ -215,7 +215,7 @@ skiparray_set_with_pair(struct skiparray *sa, void *key, void *value,
 
             if (LOG_LEVEL >= 3) {
                 for (size_t i = 0; i <= new->height; i++) {
-                    LOG(3, "post-split: sa->nodes[%zd]: %p\n",
+                    LOG(3, "post-split: sa->nodes[%zu]: %p\n",
                         i, (void *)sa->nodes[i]);
                 }
             }
@@ -226,7 +226,7 @@ skiparray_set_with_pair(struct skiparray *sa, void *key, void *value,
             struct node *prev = NULL;
             struct node *cur = NULL;
             for (size_t level = new->height - 1; level >= n->height; level--) {
-                LOG(2, "%s: updating forward pointers on level %zd, cur %p\n",
+                LOG(2, "%s: updating forward pointers on level %zu, cur %p\n",
                     __func__, level, (void *)cur);
                 if (level > sa->height) { continue; }
                 if (cur == NULL) {
@@ -238,11 +238,11 @@ skiparray_set_with_pair(struct skiparray *sa, void *key, void *value,
                     assert(cur->count > 0);
                     const int res = sa->cmp(new->keys[new->offset],
                         cur->keys[cur->offset + cur->count - 1], sa->udata);
-                    LOG(2, "%s: level %zd, cur %p, cmp %d, prev %p\n",
+                    LOG(2, "%s: level %zu, cur %p, cmp %d, prev %p\n",
                         __func__, level, (void *)cur, res, (void *)prev);
                     if (res < 0) { /* overshot */
                         if (prev == NULL) {
-                            LOG(2, "%s: setting sa->nodes[%zd] to %p\n",
+                            LOG(2, "%s: setting sa->nodes[%zu] to %p\n",
                                 __func__, level, (void *)new);
                             new->fwd[level] = sa->nodes[level];
                             sa->nodes[level] = new;
@@ -252,7 +252,7 @@ skiparray_set_with_pair(struct skiparray *sa, void *key, void *value,
                     } else if (res > 0) {
                         prev = cur;
                         if (cur->fwd[level] == NULL) {
-                            LOG(2, "%s: setting %p->fwd[%zd] to %p\n",
+                            LOG(2, "%s: setting %p->fwd[%zu] to %p\n",
                                 __func__, (void *)cur, level, (void *)new);
                             cur->fwd[level] = new;
                             break;
@@ -269,11 +269,11 @@ skiparray_set_with_pair(struct skiparray *sa, void *key, void *value,
 
                 if (prev != NULL) {
                     if (prev->fwd[level] != new) {
-                        LOG(2, "%s: setting new->fwd[%zd] to %p\n",
+                        LOG(2, "%s: setting new->fwd[%zu] to %p\n",
                             __func__, level, (void *)prev->fwd[level]);
                         new->fwd[level] = prev->fwd[level];
                     }
-                    LOG(2, "%s: setting prev->fwd[%zd] to %p\n",
+                    LOG(2, "%s: setting prev->fwd[%zu] to %p\n",
                         __func__, level, (void *)new);
                     prev->fwd[level] = new;
                     if (new->fwd[level]) {
@@ -534,11 +534,11 @@ skiparray_pop_first(struct skiparray *sa,
 
             for (size_t i = 0; i < next->height; i++) {
                 if (i < head->height) {
-                    LOG(2, "%s: head->fwd[%zd] = next->fwd[%zd] = %p\n",
+                    LOG(2, "%s: head->fwd[%zu] = next->fwd[%zu] = %p\n",
                         __func__, i, i, (void *)next->fwd[i]);
                     head->fwd[i] = next->fwd[i];
                 } else {
-                    LOG(2, "%s: sa->nodes[%zd] = next->fwd[%zd] = %p\n",
+                    LOG(2, "%s: sa->nodes[%zu] = next->fwd[%zu] = %p\n",
                         __func__, i, i, (void *)next->fwd[i]);
                     assert(sa->nodes[i] == next);
                     sa->nodes[i] = next->fwd[i];
@@ -860,17 +860,16 @@ skiparray_bsearch(const void *key, const void * const *keys,
 #if LOG_LEVEL >= 4
     LOG(4, "====== %s\n", __func__);
     for (size_t i = 0; i < key_count; i++) {
-        LOG(4, "%zd: %p\n", i, (void *)keys[i]);
+        LOG(4, "%zu: %p\n", i, (void *)keys[i]);
     }
 #endif
 
     assert(key_count > 0);
     int low = 0;
     int high = key_count;
-    int cur = 0;
 
     while (low < high) {
-        cur = (low + high)/2;
+        int cur = (low + high)/2;
 
         int res = cmp(key, keys[cur], udata);
         LOG(3, "%s: low %d, high %d, cur %d: res %d\n",
@@ -913,7 +912,7 @@ search(struct search_env *env) {
     assert(cmp != NULL);
 
     struct node *cur = sa->nodes[level];
-    LOG(2, "%s: level %u: cur %p\n", __func__, level, (void *)cur);
+    LOG(2, "%s: level %d: cur %p\n", __func__, level, (void *)cur);
     assert(cur != NULL);
     if (cur->count == 0) {
         LOG(2, "%s: empty head => NOT_FOUND\n", __func__);
@@ -924,7 +923,7 @@ search(struct search_env *env) {
     if (LOG_LEVEL >= 3) {
         assert(level >= 0);
         for (size_t i = 0; i <= (size_t)level; i++) {
-            LOG(3, "%s: sa->nodes[%zd]: %p\n",
+            LOG(3, "%s: sa->nodes[%zu]: %p\n",
                 __func__, i, (void *)sa->nodes[i]);
         }
     }
@@ -938,7 +937,7 @@ search(struct search_env *env) {
         const int cmp_res = cmp(env->key,
             cur->keys[cur->offset + cur->count - 1], udata);
 
-        LOG(2, "%s: level %u, cur %p, cmp_res %d\n",
+        LOG(2, "%s: level %d, cur %p, cmp_res %d\n",
             __func__, level, (void *)cur, cmp_res);
 
         if (cmp_res < 0) {     /* key < this node's last key */
@@ -949,12 +948,12 @@ search(struct search_env *env) {
                 /* If adding a binding to the beginning, put it in the end
                  * of the previous one if it's less full. */
                 if (!found && env->index == 0) {
-                    struct node *prev = cur->back;
-                    if (prev != NULL && prev->count < cur->count) {
+                    struct node *back = cur->back;
+                    if (back != NULL && back->count < cur->count) {
                         LOG(2, "%s: choosing end of previous node %p rather than start of %p\n",
-                            __func__, (void *)prev, (void *)cur);
-                        env->index = prev->count;
-                        cur = prev;
+                            __func__, (void *)back, (void *)cur);
+                        env->index = back->count;
+                        cur = back;
                     }
                 }
                 break;
@@ -997,7 +996,6 @@ search(struct search_env *env) {
             }
         } else {                /* exact match: last node key */
             found = true;
-            env->n = cur;
             env->index = cur->count - 1;
             LOG(2, "%s: == index = %" PRIu16 "\n",
                 __func__, env->index);
@@ -1309,7 +1307,7 @@ dump_raw_bindings(const char *tag,
     if (LOG_LEVEL > 4) {
         LOG(4, "====== %s\n", tag);
         for (size_t i = 0; i < sa->node_size; i++) {
-            LOG(4, "%zd: %p => %p\n", i, (void *)n->keys[i], (void *)n->values[i]);
+            LOG(4, "%zu: %p => %p\n", i, (void *)n->keys[i], (void *)n->values[i]);
         }
     }
 }

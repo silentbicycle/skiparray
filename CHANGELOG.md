@@ -16,13 +16,15 @@ custom memory hook interface doesn't guarantee it.
 
 The SAN Makefile variable wasn't actually being used in build targets.
 
+### Other Improvements
+
 Added `cppcheck` target to the Makefile.
 
 Added `scan-build` target to the Makefile.
 
-### Other Improvements
-
-None.
+Fixed some static analysis warnings, related to format strings. Also,
+rename a variable to avoid harmless shadowing, and eliminate a redundant
+variable update.
 
 
 ## v0.1.0 - 2019-04-08
