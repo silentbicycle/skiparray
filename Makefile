@@ -115,6 +115,9 @@ leak_check: CC=clang
 leak_check: SAN=-fsanitize=memory,undefined
 leak_check: test
 
+scan-build:
+	scan-build ${MAKE} everything
+
 cppcheck:
 	cppcheck --enable=all -I${INCLUDE} ${SRC}/*.c
 
@@ -157,6 +160,6 @@ uninstall_lib:
 uninstall_pc:
 	${RM} -f ${DESTDIR}${PREFIX}/${LIBDIR}/lib${PROJECT}.pc
 
-.PHONY: test clean tags coverage profile leak_check cppcheck \
+.PHONY: test clean tags coverage profile leak_check cppcheck scan-build \
 	everything library bench profile profile_perf profile_gprof \
 	install install_lib install_pc uninstall uninstall_lib uninstall_pc

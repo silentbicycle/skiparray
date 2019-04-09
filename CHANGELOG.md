@@ -18,6 +18,8 @@ The SAN Makefile variable wasn't actually being used in build targets.
 
 Added `cppcheck` target to the Makefile.
 
+Added `scan-build` target to the Makefile.
+
 ### Other Improvements
 
 None.
