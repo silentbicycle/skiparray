@@ -185,7 +185,7 @@ get_nonexistent(void) {
 
     TIME(pre);
     for (size_t i = 0; i < limit; i++) {
-        intptr_t k = (i * prime) + limit;
+        intptr_t k = ((i * prime) % limit) + limit;
         intptr_t v = 0;
         skiparray_get(sa, (void *) k, (void **)&v);
         assert(v == 0);

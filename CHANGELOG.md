@@ -8,7 +8,8 @@ None.
 
 ### Bug Fixes
 
-None.
+Fixed an overflow bug in the `get_nonexistent` benchmark that meant an
+assertion could fail in a 32-bit environment. (Reported by @acfoltzer.)
 
 ### Other Improvements
 
