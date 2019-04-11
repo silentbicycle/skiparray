@@ -1,6 +1,6 @@
 # skiparray Changes By Release
 
-## v0.1.1 - 2019-xx-yy
+## v0.1.1 - 2019-04-11
 
 ### API Changes
 
