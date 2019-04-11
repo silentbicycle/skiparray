@@ -18,9 +18,11 @@ CDEFS +=
 CINCS +=	-I${INCLUDE}
 CINCS +=	-I${VENDOR}
 CSTD +=		-std=c99
+CDEBUG =	-ggdb3
 
-CFLAGS +=	${CSTD} -ggdb3 ${WARN} ${CDEFS} ${CINCS} ${OPTIMIZE}
-LDFLAGS +=	-ggdb3
+CFLAGS +=	${CSTD} ${CDEBUG} ${OPTIMIZE} ${SAN}
+CFLAGS +=	${WARN} ${CDEFS} ${CINCS}
+LDFLAGS +=	${CDEBUG} ${SAN}
 
 TEST_CFLAGS_theft =	$(shell pkg-config --cflags libtheft)
 TEST_LDFLAGS_theft =	$(shell pkg-config --libs libtheft)
@@ -113,6 +115,12 @@ leak_check: CC=clang
 leak_check: SAN=-fsanitize=memory,undefined
 leak_check: test
 
+scan-build:
+	scan-build ${MAKE} everything
+
+cppcheck:
+	cppcheck --enable=all -I${INCLUDE} ${SRC}/*.c
+
 ${BUILD}:
 	mkdir ${BUILD}
 
@@ -152,6 +160,6 @@ uninstall_lib:
 uninstall_pc:
 	${RM} -f ${DESTDIR}${PREFIX}/${LIBDIR}/lib${PROJECT}.pc
 
-.PHONY: test clean tags coverage profile leak_check \
+.PHONY: test clean tags coverage profile leak_check cppcheck scan-build \
 	everything library bench profile profile_perf profile_gprof \
 	install install_lib install_pc uninstall uninstall_lib uninstall_pc
