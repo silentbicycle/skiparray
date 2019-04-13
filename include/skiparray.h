@@ -278,4 +278,53 @@ void
 skiparray_iter_get(struct skiparray_iter *iter,
     void **key, void **value);
 
+/* Opaque handle for a skiparray builder. This can be used to
+ * incrementally construct a skiparray more efficiently than by
+ * repeatedly calling `skiparray_set`, because only the builder
+ * is allowed to modify the skiparray until it's complete.
+ * Key/value pairs must be appended in ascending order. */
+struct skiparray_builder;
+
+/* Allocate a skiparray builder.
+ *
+ * If skip_ascending_key_check is true, then the builder will save on
+ * overhead from a comparison per append, but appending a key that is
+ * not > the previous may silently corrupt data, trigger assertions
+ * later, etc. You have been warned. */
+enum skiparray_builder_new_res {
+    SKIPARRAY_BUILDER_NEW_OK,
+    SKIPARRAY_BUILDER_NEW_ERROR_MISUSE = -1,
+    SKIPARRAY_BUILDER_NEW_ERROR_MEMORY = -2,
+};
+enum skiparray_builder_new_res
+skiparray_builder_new(const struct skiparray_config *cfg,
+    bool skip_ascending_key_check, struct skiparray_builder **builder);
+
+/* Free (and abandon) a skiparray that is still being built. */
+void
+skiparray_builder_free(struct skiparray_builder *b,
+    skiparray_free_fun *cb, void *udata);
+
+/* Append a key/value pair with the builder. The key should be > the
+ * previous key, according to the builder's comparison function.
+ *
+ * If doing an ascending key check, it will compare the new key against
+ * the previously appended key (if any), and either append or return
+ * ERROR_MISUSE and leave the builder unchanged. */
+enum skiparray_builder_append_res {
+    SKIPARRAY_BUILDER_APPEND_OK,
+    SKIPARRAY_BUILDER_APPEND_ERROR_MISUSE = -1,
+    SKIPARRAY_BUILDER_APPEND_ERROR_MEMORY = -2,
+};
+enum skiparray_builder_append_res
+skiparray_builder_append(struct skiparray_builder *b,
+    void *key, void *value);
+
+/* Finish a builder, converting it to a skiparray.
+ * The builder will be freed, and *b will be set to NULL.
+ * This operation cannot fail. */
+void
+skiparray_builder_finish(struct skiparray_builder **b,
+    struct skiparray **sa);
+
 #endif

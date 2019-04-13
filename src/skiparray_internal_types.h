@@ -23,6 +23,16 @@ struct skiparray {
     struct node *nodes[];
 };
 
+struct skiparray_builder {
+    struct skiparray *sa;
+    struct node *last;
+    bool check_ascending;
+    bool has_prev_key;
+    void *prev_key;
+
+    struct node *trail[];
+};
+
 struct node {
     /* How many levels is this node on? >= 1. */
     const uint8_t height;

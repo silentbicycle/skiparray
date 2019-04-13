@@ -12,6 +12,7 @@
 bool test_skiparray_invariants(struct skiparray *sa, int verbosity);
 
 SUITE_EXTERN(basic);
+SUITE_EXTERN(builder);
 SUITE_EXTERN(prop);
 SUITE_EXTERN(integration);
 

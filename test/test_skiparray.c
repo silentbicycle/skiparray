@@ -6,6 +6,7 @@ GREATEST_MAIN_DEFS();
 int main(int argc, char **argv) {
     GREATEST_MAIN_BEGIN();      /* command-line arguments, initialization. */
     RUN_SUITE(basic);
+    RUN_SUITE(builder);
     RUN_SUITE(integration);
     RUN_SUITE(prop);
     GREATEST_MAIN_END();        /* display results */

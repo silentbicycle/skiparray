@@ -10,6 +10,12 @@ are being used.
 
 `skiparray_new`'s `config` argument is now `const`.
 
+Added the `skiparray_builder` interface, which can be used to
+incrementally construct a skiparray by appending ascending keys. This is
+significantly more efficient than constructing by repeatedly calling
+`skiparray_set`, because it avoids redundant searches for where to put
+the new binding.
+
 ### Bug Fixes
 
 `skiparray_new` could previously return `SKIPARRAY_NEW_ERROR_NULL` if

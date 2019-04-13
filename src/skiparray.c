@@ -808,6 +808,156 @@ skiparray_iter_get(struct skiparray_iter *iter,
     }
 }
 
+enum skiparray_builder_new_res
+skiparray_builder_new(const struct skiparray_config *cfg,
+    bool skip_ascending_key_check, struct skiparray_builder **builder) {
+    if (builder == NULL) { return SKIPARRAY_BUILDER_NEW_ERROR_MISUSE; }
+
+    struct skiparray *sa = NULL;
+    enum skiparray_new_res nres = skiparray_new(cfg, &sa);
+    switch (nres) {
+    default:
+        assert(false);
+    case SKIPARRAY_NEW_ERROR_NULL:
+    case SKIPARRAY_NEW_ERROR_CONFIG:
+        return SKIPARRAY_BUILDER_NEW_ERROR_MISUSE;
+    case SKIPARRAY_NEW_ERROR_MEMORY:
+        return SKIPARRAY_BUILDER_NEW_ERROR_MEMORY;
+    case SKIPARRAY_NEW_OK:
+        break;                  /* continue below */
+    }
+
+    struct skiparray_builder *b = NULL;
+    const size_t alloc_size = sizeof(*b)
+      + sa->max_level * sizeof(b->trail[0]);
+    b = sa->mem(NULL, alloc_size, sa->udata);
+    if (b == NULL) {
+        skiparray_free(sa, NULL, NULL);
+        return SKIPARRAY_BUILDER_NEW_ERROR_MEMORY;
+    }
+    memset(b, 0x00, alloc_size);
+
+    b->sa = sa;
+    b->last = sa->nodes[0];
+    b->last->offset = 0;
+
+    LOG(3, "%s: initializing builder with n %p (height %u)\n",
+        __func__, (void *)b->last, b->last->height);
+
+    for (size_t i = 0; i < b->last->height; i++) {
+        b->trail[i] = b->last;
+        LOG(3, "    -- b->trail[%zu] <- %p\n", i, (void *)b->last);
+        assert(b->trail[i] == sa->nodes[i]);
+    }
+
+    b->check_ascending = !skip_ascending_key_check;
+    b->has_prev_key = false;
+    *builder = b;
+    return SKIPARRAY_BUILDER_NEW_OK;
+}
+
+void
+skiparray_builder_free(struct skiparray_builder *b,
+    skiparray_free_fun *cb, void *udata) {
+    if (b == NULL) { return; }
+    assert(b->sa != NULL);
+    struct skiparray *sa = b->sa;
+    b->sa->mem(b, 0, sa->udata);
+    skiparray_free(sa, cb, udata);
+}
+
+enum skiparray_builder_append_res
+skiparray_builder_append(struct skiparray_builder *b,
+    void *key, void *value) {
+    assert(b != NULL);
+    assert(b->sa != NULL);
+    assert(b->last != NULL);
+
+    struct skiparray *sa = b->sa;
+    struct node *last = b->last;
+    assert(last->offset == 0);
+
+    /* reject key if <= previous; must be ascending */
+    if (b->has_prev_key) {
+        if (sa->cmp(key, b->prev_key, sa->udata) <= 0) {
+            return SKIPARRAY_BUILDER_APPEND_ERROR_MISUSE;
+        }
+    }
+
+    LOG(3, "%s: last is %p (%u height, %u count), sa height is %u\n",
+        __func__, (void *)last, last->height, last->count, sa->height);
+
+    /* If the current last node is full, then allocate a new last node
+     * and connect back and forward pointers according to the trail. */
+    if (last->count == sa->node_size) {
+        uint8_t level = sa->level(sa->prng_state,
+            &sa->prng_state, sa->udata) + 1;
+        if (level >= sa->max_level) { level = sa->max_level - 1; }
+
+        struct node *new = node_alloc(level + 1, sa->node_size,
+            sa->mem, sa->udata, sa->use_values);
+        if (new == NULL) {
+            return SKIPARRAY_BUILDER_APPEND_ERROR_MEMORY;
+        }
+        LOG(3, "    -- new %p, height %u\n", (void *)new, new->height);
+
+        for (size_t i = 0; i < last->height; i++) {
+            if (i >= new->height) { break; }
+            LOG(3, "    -- last->fwd[%zu] -> %p\n", i, (void *)new);
+            last->fwd[i] = new;
+        }
+        for (size_t i = 0; i < new->height; i++) {
+            if (b->trail[i] == NULL) {
+                LOG(3, "    -- b->trail[%zu] -> %p\n", i, (void *)new);
+                b->trail[i] = new;
+            } else {
+                LOG(3, "    -- b->trail(%p)->fwd[%zu] -> %p\n",
+                    (void *)b->trail[i], i, (void *)new);
+                assert(b->trail[i]->height > i);
+                b->trail[i]->fwd[i] = new;
+                LOG(3, "    -- b->trail[%zu] -> %p\n", i, (void *)new);
+                b->trail[i] = new;
+            }
+        }
+
+        /* If the new node is taller than the current SA height,
+         * then increase it and update forward links. */
+        while (new->height > sa->height) {
+            sa->nodes[sa->height] = new;
+            sa->height++;
+        }
+        new->back = last;
+        assert(last->fwd[0] == new);
+        new->offset = 0;
+        last = new;
+        b->last = last;
+    }
+
+    last->keys[last->count] = key;
+    if (last->values != NULL) { last->values[last->count] = value; }
+    last->count++;
+
+    if (b->check_ascending) {
+        b->has_prev_key = true;
+        b->prev_key = key;
+    }
+    return SKIPARRAY_BUILDER_APPEND_OK;
+}
+
+void
+skiparray_builder_finish(struct skiparray_builder **b,
+    struct skiparray **sa) {
+    assert(b != NULL);
+    assert(sa != NULL);
+
+    struct skiparray_builder *builder = *b;
+    *b = NULL;
+    assert(builder != NULL);
+
+    *sa = builder->sa;
+    (*sa)->mem(builder, 0, (*sa)->udata);
+}
+
 static struct node *
 node_alloc(uint8_t height, uint16_t node_size,
     skiparray_memory_fun *mem, void *udata, bool use_values) {

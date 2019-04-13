@@ -284,6 +284,54 @@ set_sequential(size_t limit) {
 }
 
 static void
+set_sequential_builder(size_t limit) {
+    struct skiparray_builder *b = NULL;
+
+    enum skiparray_builder_new_res bnres = skiparray_builder_new(&sa_config,
+        false, &b);
+    (void)bnres;
+
+    TIME(pre);
+    for (size_t i = 0; i < limit; i++) {
+        intptr_t k = i;
+        enum skiparray_builder_append_res bares =
+          skiparray_builder_append(b, (void *) k, (void *) k);
+        (void)bares;
+    }
+
+    struct skiparray *sa = NULL;
+    skiparray_builder_finish(&b, &sa);
+    TIME(post);
+
+    TDIFF();
+    skiparray_free(sa, NULL, NULL);
+}
+
+static void
+set_sequential_builder_no_chk(size_t limit) {
+    struct skiparray_builder *b = NULL;
+
+    enum skiparray_builder_new_res bnres = skiparray_builder_new(&sa_config,
+        true, &b);
+    (void)bnres;
+
+    TIME(pre);
+    for (size_t i = 0; i < limit; i++) {
+        intptr_t k = i;
+        enum skiparray_builder_append_res bares =
+          skiparray_builder_append(b, (void *) k, (void *) k);
+        (void)bares;
+    }
+
+    struct skiparray *sa = NULL;
+    skiparray_builder_finish(&b, &sa);
+    TIME(post);
+
+    TDIFF();
+    skiparray_free(sa, NULL, NULL);
+}
+
+static void
 set_random_access(size_t limit) {
     struct skiparray *sa = NULL;
     enum skiparray_new_res nres = skiparray_new(&sa_config, &sa);
@@ -624,6 +672,8 @@ static struct benchmark benchmarks[] = {
     { "get_random_access_no_values", get_random_access_no_values },
     { "get_nonexistent", get_nonexistent },
     { "set_sequential", set_sequential },
+    { "set_sequential_builder", set_sequential_builder },
+    { "set_sequential_builder_no_chk", set_sequential_builder_no_chk },
     { "set_random_access", set_random_access },
     { "set_random_access_no_values", set_random_access_no_values },
     { "set_replacing_sequential", set_replacing_sequential },

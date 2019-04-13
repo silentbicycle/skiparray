@@ -39,6 +39,7 @@ OBJS=		${BUILD}/skiparray.o \
 TEST_OBJS=	${OBJS} \
 		${BUILD}/test_${PROJECT}.o \
 		${BUILD}/test_${PROJECT}_basic.o \
+		${BUILD}/test_${PROJECT}_builder.o \
 		${BUILD}/test_${PROJECT}_prop.o \
 		${BUILD}/test_${PROJECT}_integration.o \
 		${BUILD}/test_${PROJECT}_invariants.o \
