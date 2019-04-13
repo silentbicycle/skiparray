@@ -151,18 +151,32 @@ static struct skiparray_config sa_config = {
 
 static struct skiparray_config sa_config_no_values;
 
+static struct skiparray *
+sequential_build(const struct skiparray_config *config, size_t limit) {
+    struct skiparray_builder *b = NULL;
+
+    enum skiparray_builder_new_res bnres =
+      skiparray_builder_new(&sa_config, false, &b);
+    (void)bnres;
+
+    for (size_t i = 0; i < limit; i++) {
+        intptr_t k = i;
+        enum skiparray_builder_append_res bares =
+          skiparray_builder_append(b, (void *) k,
+              (config->ignore_values ? NULL : (void *) k));
+        (void)bares;
+    }
+
+    struct skiparray *sa = NULL;
+    skiparray_builder_finish(&b, &sa);
+    return sa;
+}
 
 /* Measure insertions. */
 /* Measure getting existing values (successful lookup). */
 static void
 get_sequential(size_t limit) {
-    struct skiparray *sa = NULL;
-    enum skiparray_new_res nres = skiparray_new(&sa_config, &sa);
-    (void)nres;
-
-    for (size_t i = 0; i < limit; i++) {
-        skiparray_set(sa, (void *)i, (void *)i);
-    }
+    struct skiparray *sa = sequential_build(&sa_config, limit);
 
     TIME(pre);
     for (size_t i = 0; i < limit; i++) {
@@ -180,13 +194,7 @@ get_sequential(size_t limit) {
 /* Measure getting existing values (successful lookup). */
 static void
 get_random_access(size_t limit) {
-    struct skiparray *sa = NULL;
-    enum skiparray_new_res nres = skiparray_new(&sa_config, &sa);
-    (void)nres;
-
-    for (size_t i = 0; i < limit; i++) {
-        skiparray_set(sa, (void *)i, (void *)i);
-    }
+    struct skiparray *sa = sequential_build(&sa_config, limit);
 
     TIME(pre);
     for (size_t i = 0; i < limit; i++) {
@@ -204,13 +212,7 @@ get_random_access(size_t limit) {
 /* Same, but only use keys. */
 static void
 get_random_access_no_values(size_t limit) {
-    struct skiparray *sa = NULL;
-    enum skiparray_new_res nres = skiparray_new(&sa_config_no_values, &sa);
-    (void)nres;
-
-    for (size_t i = 0; i < limit; i++) {
-        skiparray_set(sa, (void *)i, (void *)i);
-    }
+    struct skiparray *sa = sequential_build(&sa_config_no_values, limit);
 
     TIME(pre);
     for (size_t i = 0; i < limit; i++) {
@@ -226,13 +228,7 @@ get_random_access_no_values(size_t limit) {
 /* Measure getting _nonexistent_ values (lookup failure). */
 static void
 get_nonexistent(size_t limit) {
-    struct skiparray *sa = NULL;
-    enum skiparray_new_res nres = skiparray_new(&sa_config, &sa);
-    (void)nres;
-
-    for (size_t i = 0; i < limit; i++) {
-        skiparray_set(sa, (void *)i, (void *)i);
-    }
+    struct skiparray *sa = sequential_build(&sa_config, limit);
 
     TIME(pre);
     for (size_t i = 0; i < limit; i++) {
@@ -249,13 +245,7 @@ get_nonexistent(size_t limit) {
 
 static void
 count(size_t limit) {
-    struct skiparray *sa = NULL;
-    enum skiparray_new_res nres = skiparray_new(&sa_config, &sa);
-    (void)nres;
-
-    for (size_t i = 0; i < limit; i++) {
-        skiparray_set(sa, (void *)i, (void *)i);
-    }
+    struct skiparray *sa = sequential_build(&sa_config, limit);
 
     TIME(pre);
     size_t count = skiparray_count(sa);
@@ -287,8 +277,8 @@ static void
 set_sequential_builder(size_t limit) {
     struct skiparray_builder *b = NULL;
 
-    enum skiparray_builder_new_res bnres = skiparray_builder_new(&sa_config,
-        false, &b);
+    enum skiparray_builder_new_res bnres =
+      skiparray_builder_new(&sa_config, false, &b);
     (void)bnres;
 
     TIME(pre);
@@ -311,8 +301,8 @@ static void
 set_sequential_builder_no_chk(size_t limit) {
     struct skiparray_builder *b = NULL;
 
-    enum skiparray_builder_new_res bnres = skiparray_builder_new(&sa_config,
-        true, &b);
+    enum skiparray_builder_new_res bnres =
+      skiparray_builder_new(&sa_config, true, &b);
     (void)bnres;
 
     TIME(pre);
@@ -367,14 +357,7 @@ set_random_access_no_values(size_t limit) {
 
 static void
 set_replacing_sequential(size_t limit) {
-    struct skiparray *sa = NULL;
-    enum skiparray_new_res nres = skiparray_new(&sa_config, &sa);
-    (void)nres;
-
-    for (size_t i = 0; i < limit; i++) {
-        intptr_t k = i;
-        skiparray_set(sa, (void *) k, (void *) k);
-    }
+    struct skiparray *sa = sequential_build(&sa_config, limit);
 
     TIME(pre);
     for (size_t i = 0; i < limit; i++) {
@@ -389,14 +372,7 @@ set_replacing_sequential(size_t limit) {
 
 static void
 set_replacing_random_access(size_t limit) {
-    struct skiparray *sa = NULL;
-    enum skiparray_new_res nres = skiparray_new(&sa_config, &sa);
-    (void)nres;
-
-    for (size_t i = 0; i < limit; i++) {
-        intptr_t k = (i * prime) % limit;
-        skiparray_set(sa, (void *) k, (void *) k);
-    }
+    struct skiparray *sa = sequential_build(&sa_config, limit);
 
     TIME(pre);
     for (size_t i = 0; i < limit; i++) {
@@ -411,13 +387,7 @@ set_replacing_random_access(size_t limit) {
 
 static void
 forget_sequential(size_t limit) {
-    struct skiparray *sa = NULL;
-    enum skiparray_new_res nres = skiparray_new(&sa_config, &sa);
-    (void)nres;
-
-    for (size_t i = 0; i < limit; i++) {
-        skiparray_set(sa, (void *)i, (void *)i);
-    }
+    struct skiparray *sa = sequential_build(&sa_config, limit);
 
     TIME(pre);
     for (size_t i = 0; i < limit; i++) {
@@ -432,13 +402,7 @@ forget_sequential(size_t limit) {
 
 static void
 forget_random_access(size_t limit) {
-    struct skiparray *sa = NULL;
-    enum skiparray_new_res nres = skiparray_new(&sa_config, &sa);
-    (void)nres;
-
-    for (size_t i = 0; i < limit; i++) {
-        skiparray_set(sa, (void *)i, (void *)i);
-    }
+    struct skiparray *sa = sequential_build(&sa_config, limit);
 
     TIME(pre);
     for (size_t i = 0; i < limit; i++) {
@@ -453,13 +417,7 @@ forget_random_access(size_t limit) {
 
 static void
 forget_random_access_no_values(size_t limit) {
-    struct skiparray *sa = NULL;
-    enum skiparray_new_res nres = skiparray_new(&sa_config_no_values, &sa);
-    (void)nres;
-
-    for (size_t i = 0; i < limit; i++) {
-        skiparray_set(sa, (void *)i, NULL);
-    }
+    struct skiparray *sa = sequential_build(&sa_config_no_values, limit);
 
     TIME(pre);
     for (size_t i = 0; i < limit; i++) {
@@ -474,17 +432,11 @@ forget_random_access_no_values(size_t limit) {
 
 static void
 forget_nonexistent(size_t limit) {
-    struct skiparray *sa = NULL;
-    enum skiparray_new_res nres = skiparray_new(&sa_config, &sa);
-    (void)nres;
-
-    for (size_t i = 0; i < limit; i++) {
-        skiparray_set(sa, (void *)i, (void *)i);
-    }
+    struct skiparray *sa = sequential_build(&sa_config, limit);
 
     TIME(pre);
     for (size_t i = 0; i < limit; i++) {
-        intptr_t k = (i * prime) + limit;
+        intptr_t k = ((i * prime) % limit) + limit;
         (void)skiparray_forget(sa, (void *) k, NULL);
     }
     TIME(post);
@@ -495,13 +447,7 @@ forget_nonexistent(size_t limit) {
 
 static void
 pop_first(size_t limit) {
-    struct skiparray *sa = NULL;
-    enum skiparray_new_res nres = skiparray_new(&sa_config, &sa);
-    (void)nres;
-
-    for (size_t i = 0; i < limit; i++) {
-        skiparray_set(sa, (void *)i, (void *)i);
-    }
+    struct skiparray *sa = sequential_build(&sa_config, limit);
 
     TIME(pre);
     for (size_t i = 0; i < limit; i++) {
@@ -521,13 +467,7 @@ pop_first(size_t limit) {
 
 static void
 pop_last(size_t limit) {
-    struct skiparray *sa = NULL;
-    enum skiparray_new_res nres = skiparray_new(&sa_config, &sa);
-    (void)nres;
-
-    for (size_t i = 0; i < limit; i++) {
-        skiparray_set(sa, (void *)i, (void *)i);
-    }
+    struct skiparray *sa = sequential_build(&sa_config, limit);
 
     TIME(pre);
     for (size_t i = 0; i < limit; i++) {
@@ -545,13 +485,7 @@ pop_last(size_t limit) {
 
 static void
 member_sequential(size_t limit) {
-    struct skiparray *sa = NULL;
-    enum skiparray_new_res nres = skiparray_new(&sa_config, &sa);
-    (void)nres;
-
-    for (size_t i = 0; i < limit; i++) {
-        skiparray_set(sa, (void *)i, (void *)i);
-    }
+    struct skiparray *sa = sequential_build(&sa_config, limit);
 
     TIME(pre);
     for (size_t i = 0; i < limit; i++) {
@@ -565,13 +499,7 @@ member_sequential(size_t limit) {
 
 static void
 member_random_access(size_t limit) {
-    struct skiparray *sa = NULL;
-    enum skiparray_new_res nres = skiparray_new(&sa_config, &sa);
-    (void)nres;
-
-    for (size_t i = 0; i < limit; i++) {
-        skiparray_set(sa, (void *)i, (void *)i);
-    }
+    struct skiparray *sa = sequential_build(&sa_config, limit);
 
     TIME(pre);
     for (size_t i = 0; i < limit; i++) {
