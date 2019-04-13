@@ -17,7 +17,7 @@
 #include "skiparray_internal.h"
 
 enum skiparray_new_res
-skiparray_new(struct skiparray_config *config,
+skiparray_new(const struct skiparray_config *config,
     struct skiparray **sa) {
     if (sa == NULL || config == NULL || config->cmp == NULL) {
         return SKIPARRAY_NEW_ERROR_NULL;

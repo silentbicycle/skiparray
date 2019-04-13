@@ -8,6 +8,8 @@ Added `.ignore_values` flag to `struct skiparray_config` -- this
 eliminates unnecessary allocation when only the skiparray's keys
 are being used.
 
+`skiparray_new`'s `config` argument is now `const`.
+
 ### Bug Fixes
 
 `skiparray_new` could previously return `SKIPARRAY_NEW_ERROR_NULL` if

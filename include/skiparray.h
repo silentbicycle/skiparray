@@ -99,7 +99,7 @@ enum skiparray_new_res {
     SKIPARRAY_NEW_ERROR_MEMORY = -3,
 };
 enum skiparray_new_res
-skiparray_new(struct skiparray_config *config,
+skiparray_new(const struct skiparray_config *config,
     struct skiparray **sa);
 
 /* Free a skiparray. If CB is non-NULL, then it will be called with
