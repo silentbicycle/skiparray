@@ -20,20 +20,20 @@ get_usec_delta(struct timeval *pre, struct timeval *post) {
         + (post->tv_usec - pre->tv_usec));
 }
 
-#define TIME(name)                                                      \
-        struct timeval timer_##name = { 0, 0 };                         \
-        int timer_res_##name = gettimeofday(&timer_##name, NULL);       \
-        (void)timer_res_##name;                                         \
-        assert(0 == timer_res_##name);                                  \
+#define TIME(NAME)                                                      \
+        struct timeval timer_##NAME = { 0, 0 };                         \
+        int timer_res_##NAME = gettimeofday(&timer_##NAME, NULL);       \
+        (void)timer_res_##NAME;                                         \
+        assert(0 == timer_res_##NAME);                                  \
 
-#define CMP_TIME(label, n1, n2)                                         \
+#define CMP_TIME(LABEL, N1, N2)                                         \
     do {                                                                \
-        size_t usec_delta = get_usec_delta(&timer_##n1, &timer_##n2);   \
+        size_t usec_delta = get_usec_delta(&timer_##N1, &timer_##N2);   \
         double usec_per = usec_delta / (double)limit;                   \
         double per_second = usec_per_sec / usec_per;                    \
         printf("%-30s limit %zu %9.3f msec, %6.3f usec per, "           \
             "%11.3f K ops/sec",                                         \
-            label, limit, usec_delta / (double)msec_per_sec,            \
+            LABEL, limit, usec_delta / (double)msec_per_sec,            \
             usec_per, per_second / 1000);                               \
         if (track_memory) {                                             \
             printf(", %g MB hwm, %g w/e",                               \
