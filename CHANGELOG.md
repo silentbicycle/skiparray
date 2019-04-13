@@ -15,6 +15,9 @@ are being used.
 `skiparray_new` could previously return `SKIPARRAY_NEW_ERROR_NULL` if
 memory allocation failed, rather than `SKIPARRAY_NEW_ERROR_MEMORY`.
 
+`skiparray_new` now returns `SKIPARRAY_NEW_ERROR_CONFIG` if the required
+comparison callback is `NULL`, rather than `SKIPARRAY_NEW_ERROR_NULL`.
+
 ### Other Improvements
 
 The benchmarking CLI can now take multiple, comma-separated limits (e.g.

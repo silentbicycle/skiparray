@@ -19,11 +19,11 @@
 enum skiparray_new_res
 skiparray_new(const struct skiparray_config *config,
     struct skiparray **sa) {
-    if (sa == NULL || config == NULL || config->cmp == NULL) {
+    if (sa == NULL || config == NULL) {
         return SKIPARRAY_NEW_ERROR_NULL;
     }
 
-    if (config->node_size == 1) {
+    if (config->node_size == 1 || config->cmp == NULL) {
         return SKIPARRAY_NEW_ERROR_CONFIG;
     }
 
