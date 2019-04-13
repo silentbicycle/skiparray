@@ -61,11 +61,13 @@ static size_t memory_hwm;       /* allocation high-water mark */
 
 static void
 usage(void) {
-    fprintf(stderr, "Usage: benchmarks [-c <cycles>] [-l <limit>] [-m] [-n <name>]\n\n");
+    fprintf(stderr, "Usage: benchmarks [-c <cycles>] [-l <limit>] [-m]\n");
+    fprintf(stderr, "                  [-n <name>] [-s <size>]\n\n");
     fprintf(stderr, "  -c: run multiple cycles of benchmarks (def. 1)\n");
     fprintf(stderr, "  -l: set limit(s); comma-separated, default %zu.\n", DEF_LIMIT);
     fprintf(stderr, "  -m: track the memory high-water mark, in MB and words/entry.\n");
     fprintf(stderr, "  -n: run one benchmark. 'help' prints available benchmarks.\n");
+    fprintf(stderr, "  -s: node size, default %d.\n", SKIPARRAY_DEF_NODE_SIZE);
     exit(EXIT_FAILURE);
 }
 
