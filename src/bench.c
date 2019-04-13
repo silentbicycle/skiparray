@@ -26,31 +26,33 @@ get_usec_delta(struct timeval *pre, struct timeval *post) {
         (void)timer_res_##NAME;                                         \
         assert(0 == timer_res_##NAME);                                  \
 
-#define CMP_TIME(LABEL, N1, N2)                                         \
+#define CMP_TIME(LABEL, LIMIT, N1, N2)                                  \
     do {                                                                \
         size_t usec_delta = get_usec_delta(&timer_##N1, &timer_##N2);   \
-        double usec_per = usec_delta / (double)limit;                   \
+        double usec_per = usec_delta / (double)LIMIT;                   \
         double per_second = usec_per_sec / usec_per;                    \
-        printf("%-30s limit %zu %9.3f msec, %6.3f usec per, "           \
+        printf("%-30s limit %9zu %9.3f msec, %6.3f usec per, "          \
             "%11.3f K ops/sec",                                         \
-            LABEL, limit, usec_delta / (double)msec_per_sec,            \
+            LABEL, LIMIT, usec_delta / (double)msec_per_sec,            \
             usec_per, per_second / 1000);                               \
         if (track_memory) {                                             \
             printf(", %g MB hwm, %g w/e",                               \
                 memory_hwm / (1024.0 * 1024),                           \
-                memory_hwm / (1.0 * sizeof(void *) * limit));           \
+                memory_hwm / (1.0 * sizeof(void *) * LIMIT));           \
         }                                                               \
         printf("\n");                                                   \
     } while(0)                                                          \
 
-#define TDIFF() CMP_TIME(__func__, pre, post)
+#define TDIFF() CMP_TIME(__func__, limit, pre, post)
 
+#define MAX_LIMITS 64
 #define DEF_LIMIT ((size_t)1000000)
 #define DEF_CYCLES ((size_t)1)
 
 static const int prime = 7919;
 static size_t cycles = DEF_CYCLES;
-static size_t limit = DEF_LIMIT;
+static uint8_t limit_count = 0;
+static size_t limits[MAX_LIMITS];
 static size_t node_size = SKIPARRAY_DEF_NODE_SIZE;
 static const char *name;
 static bool track_memory;
@@ -61,10 +63,35 @@ static void
 usage(void) {
     fprintf(stderr, "Usage: benchmarks [-c <cycles>] [-l <limit>] [-m] [-n <name>]\n\n");
     fprintf(stderr, "  -c: run multiple cycles of benchmarks (def. 1)\n");
-    fprintf(stderr, "  -l: override the limit of %zu.\n", DEF_LIMIT);
+    fprintf(stderr, "  -l: set limit(s); comma-separated, default %zu.\n", DEF_LIMIT);
     fprintf(stderr, "  -m: track the memory high-water mark, in MB and words/entry.\n");
     fprintf(stderr, "  -n: run one benchmark. 'help' prints available benchmarks.\n");
     exit(EXIT_FAILURE);
+}
+
+static int cmp_size_t(const void *pa, const void *pb) {
+    const size_t a = *(size_t *)pa;
+    const size_t b = *(size_t *)pb;
+    return a < b ? -1 : a > b ? 1 : 0;
+}
+
+static bool
+parse_limits(char *optarg) {
+    char *arg = strtok(optarg, ",");
+    while (arg) {
+        size_t nlimit = strtoul(arg, NULL, 0);
+        if (nlimit <= 1) { return false; }
+        limits[limit_count] = nlimit;
+        if (limit_count == MAX_LIMITS) {
+            fprintf(stderr, "Error: Too many limits (max %d)\n", (int)MAX_LIMITS);
+            exit(EXIT_FAILURE);
+        }
+        limit_count++;
+        arg = strtok(NULL, ",");
+    }
+
+    qsort(limits, limit_count, sizeof(limits[0]), cmp_size_t);
+    return true;
 }
 
 static void
@@ -83,9 +110,8 @@ handle_args(int argc, char **argv) {
             }
             break;
         case 'l':               /* limit */
-            limit = strtoul(optarg, NULL, 0);
-            if (limit <= 1) {
-                fprintf(stderr, "Bad limit: %zu\n", limit);
+            if (!parse_limits(optarg)) {
+                fprintf(stderr, "Bad limit(s): %s\n", optarg);
                 usage();
             }
             break;
@@ -126,7 +152,7 @@ static struct skiparray_config sa_config = {
 /* Measure insertions. */
 /* Measure getting existing values (successful lookup). */
 static void
-get_sequential(void) {
+get_sequential(size_t limit) {
     struct skiparray *sa = NULL;
     enum skiparray_new_res nres = skiparray_new(&sa_config, &sa);
     (void)nres;
@@ -150,7 +176,7 @@ get_sequential(void) {
 
 /* Measure getting existing values (successful lookup). */
 static void
-get_random_access(void) {
+get_random_access(size_t limit) {
     struct skiparray *sa = NULL;
     enum skiparray_new_res nres = skiparray_new(&sa_config, &sa);
     (void)nres;
@@ -174,7 +200,7 @@ get_random_access(void) {
 
 /* Measure getting _nonexistent_ values (lookup failure). */
 static void
-get_nonexistent(void) {
+get_nonexistent(size_t limit) {
     struct skiparray *sa = NULL;
     enum skiparray_new_res nres = skiparray_new(&sa_config, &sa);
     (void)nres;
@@ -197,7 +223,7 @@ get_nonexistent(void) {
 }
 
 static void
-count(void) {
+count(size_t limit) {
     struct skiparray *sa = NULL;
     enum skiparray_new_res nres = skiparray_new(&sa_config, &sa);
     (void)nres;
@@ -216,7 +242,7 @@ count(void) {
 }
 
 static void
-set_sequential(void) {
+set_sequential(size_t limit) {
     struct skiparray *sa = NULL;
     enum skiparray_new_res nres = skiparray_new(&sa_config, &sa);
     (void)nres;
@@ -233,7 +259,7 @@ set_sequential(void) {
 }
 
 static void
-set_random_access(void) {
+set_random_access(size_t limit) {
     struct skiparray *sa = NULL;
     enum skiparray_new_res nres = skiparray_new(&sa_config, &sa);
     (void)nres;
@@ -250,7 +276,7 @@ set_random_access(void) {
 }
 
 static void
-set_replacing_sequential(void) {
+set_replacing_sequential(size_t limit) {
     struct skiparray *sa = NULL;
     enum skiparray_new_res nres = skiparray_new(&sa_config, &sa);
     (void)nres;
@@ -272,7 +298,7 @@ set_replacing_sequential(void) {
 }
 
 static void
-set_replacing_random_access(void) {
+set_replacing_random_access(size_t limit) {
     struct skiparray *sa = NULL;
     enum skiparray_new_res nres = skiparray_new(&sa_config, &sa);
     (void)nres;
@@ -294,7 +320,7 @@ set_replacing_random_access(void) {
 }
 
 static void
-forget_sequential(void) {
+forget_sequential(size_t limit) {
     struct skiparray *sa = NULL;
     enum skiparray_new_res nres = skiparray_new(&sa_config, &sa);
     (void)nres;
@@ -315,7 +341,7 @@ forget_sequential(void) {
 }
 
 static void
-forget_random_access(void) {
+forget_random_access(size_t limit) {
     struct skiparray *sa = NULL;
     enum skiparray_new_res nres = skiparray_new(&sa_config, &sa);
     (void)nres;
@@ -336,7 +362,7 @@ forget_random_access(void) {
 }
 
 static void
-forget_nonexistent(void) {
+forget_nonexistent(size_t limit) {
     struct skiparray *sa = NULL;
     enum skiparray_new_res nres = skiparray_new(&sa_config, &sa);
     (void)nres;
@@ -357,7 +383,7 @@ forget_nonexistent(void) {
 }
 
 static void
-pop_first(void) {
+pop_first(size_t limit) {
     struct skiparray *sa = NULL;
     enum skiparray_new_res nres = skiparray_new(&sa_config, &sa);
     (void)nres;
@@ -383,7 +409,7 @@ pop_first(void) {
 }
 
 static void
-pop_last(void) {
+pop_last(size_t limit) {
     struct skiparray *sa = NULL;
     enum skiparray_new_res nres = skiparray_new(&sa_config, &sa);
     (void)nres;
@@ -407,7 +433,7 @@ pop_last(void) {
 }
 
 static void
-member_sequential(void) {
+member_sequential(size_t limit) {
     struct skiparray *sa = NULL;
     enum skiparray_new_res nres = skiparray_new(&sa_config, &sa);
     (void)nres;
@@ -427,7 +453,7 @@ member_sequential(void) {
 }
 
 static void
-member_random_access(void) {
+member_random_access(size_t limit) {
     struct skiparray *sa = NULL;
     enum skiparray_new_res nres = skiparray_new(&sa_config, &sa);
     (void)nres;
@@ -448,7 +474,7 @@ member_random_access(void) {
 }
 
 static void
-sum(void) {
+sum(size_t limit) {
     struct skiparray *sa = NULL;
     enum skiparray_new_res nres = skiparray_new(&sa_config, &sa);
     (void)nres;
@@ -485,7 +511,7 @@ sum(void) {
 }
 
 static void
-sum_partway(void) {
+sum_partway(size_t limit) {
     struct skiparray *sa = NULL;
     enum skiparray_new_res nres = skiparray_new(&sa_config, &sa);
     (void)nres;
@@ -522,7 +548,7 @@ sum_partway(void) {
 }
 
 typedef void
-benchmark_fun(void);
+benchmark_fun(size_t limit);
 
 struct benchmark {
     const char *name;
@@ -577,6 +603,11 @@ int
 main(int argc, char **argv) {
     handle_args(argc, argv);
 
+    if (limit_count == 0) {
+        limits[limit_count] = DEF_LIMIT;
+        limit_count++;
+    }
+
     sa_config.node_size = node_size;
     if (track_memory) { sa_config.memory = memory_cb; }
 
@@ -592,12 +623,14 @@ main(int argc, char **argv) {
     size_t namelen = 0;
     if (name != NULL) { namelen = strlen(name); }
 
-    for (size_t c_i = 0; c_i < cycles; c_i++) {
-        for (struct benchmark *b = &benchmarks[0]; b->name; b++) {
-            memory_used = 0;
-            memory_hwm = 0;
-            if (name == NULL || 0 == strncmp(name, b->name, namelen)) {
-                b->fun();
+    for (size_t l_i = 0; l_i < limit_count; l_i++) {
+        for (size_t c_i = 0; c_i < cycles; c_i++) {
+            for (struct benchmark *b = &benchmarks[0]; b->name; b++) {
+                memory_used = 0;
+                memory_hwm = 0;
+                if (name == NULL || 0 == strncmp(name, b->name, namelen)) {
+                    b->fun(limits[l_i]);
+                }
             }
         }
     }
