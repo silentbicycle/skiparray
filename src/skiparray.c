@@ -1460,11 +1460,11 @@ shift_pairs(struct node *n,
 static void
 move_pairs(struct node *to, struct node *from,
     uint16_t to_pos, uint16_t from_pos, uint16_t count) {
-    memmove(&to->keys[to_pos],
+    memcpy(&to->keys[to_pos],
         &from->keys[from_pos],
         count * sizeof(to->keys[0]));
     if (to->values != NULL) {
-        memmove(&to->values[to_pos],
+        memcpy(&to->values[to_pos],
             &from->values[from_pos],
             count * sizeof(to->values[0]));
     }
