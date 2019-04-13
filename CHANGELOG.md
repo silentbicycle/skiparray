@@ -10,7 +10,8 @@ are being used.
 
 ### Bug Fixes
 
-None.
+`skiparray_new` could previously return `SKIPARRAY_NEW_ERROR_NULL` if
+memory allocation failed, rather than `SKIPARRAY_NEW_ERROR_MEMORY`.
 
 ### Other Improvements
 

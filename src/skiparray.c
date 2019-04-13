@@ -39,7 +39,7 @@ skiparray_new(struct skiparray_config *config,
     const size_t alloc_size = sizeof(struct skiparray) +
       max_level * sizeof(struct node *);
     struct skiparray *res = mem(NULL, alloc_size, config->udata);
-    if (res == NULL) { return SKIPARRAY_NEW_ERROR_NULL; }
+    if (res == NULL) { return SKIPARRAY_NEW_ERROR_MEMORY; }
     memset(res, 0x00, alloc_size);
 
     uint64_t prng_state = 0;
