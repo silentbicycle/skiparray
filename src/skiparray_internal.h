@@ -19,7 +19,7 @@
 
 static struct node *
 node_alloc(uint8_t height, uint16_t node_size,
-    skiparray_memory_fun *mem, void *udata);
+    skiparray_memory_fun *mem, void *udata, bool use_values);
 
 static void node_free(const struct skiparray *sa, struct node *n);
 

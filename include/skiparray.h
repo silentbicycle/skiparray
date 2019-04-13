@@ -79,6 +79,11 @@ struct skiparray_config {
      * A max_level of 0 will use the default. */
     uint8_t max_level;
     uint64_t seed;
+    /* If this flag is set, then no memory will be allocated for values,
+     * and value parameters will be ignored. If only the keys are being
+     * used (as an ordered set), then this will cut memory usage in
+     * half, and make operations faster by reducing cache misses. */
+    bool ignore_values;
 
     skiparray_cmp_fun *cmp;       /* required */
     skiparray_memory_fun *memory; /* optional */

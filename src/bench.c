@@ -149,6 +149,9 @@ static struct skiparray_config sa_config = {
     .seed = 0,
 };
 
+static struct skiparray_config sa_config_no_values;
+
+
 /* Measure insertions. */
 /* Measure getting existing values (successful lookup). */
 static void
@@ -191,6 +194,28 @@ get_random_access(size_t limit) {
         intptr_t v = 0;
         skiparray_get(sa, (void *) k, (void **)&v);
         assert(v == k);
+    }
+    TIME(post);
+
+    TDIFF();
+    skiparray_free(sa, NULL, NULL);
+}
+
+/* Same, but only use keys. */
+static void
+get_random_access_no_values(size_t limit) {
+    struct skiparray *sa = NULL;
+    enum skiparray_new_res nres = skiparray_new(&sa_config_no_values, &sa);
+    (void)nres;
+
+    for (size_t i = 0; i < limit; i++) {
+        skiparray_set(sa, (void *)i, (void *)i);
+    }
+
+    TIME(pre);
+    for (size_t i = 0; i < limit; i++) {
+        intptr_t k = (i * prime) % limit;
+        skiparray_get(sa, (void *) k, NULL);
     }
     TIME(post);
 
@@ -268,6 +293,23 @@ set_random_access(size_t limit) {
     for (size_t i = 0; i < limit; i++) {
         intptr_t k = (i * prime) % limit;
         skiparray_set(sa, (void *) k, (void *) k);
+    }
+    TIME(post);
+
+    TDIFF();
+    skiparray_free(sa, NULL, NULL);
+}
+
+static void
+set_random_access_no_values(size_t limit) {
+    struct skiparray *sa = NULL;
+    enum skiparray_new_res nres = skiparray_new(&sa_config_no_values, &sa);
+    (void)nres;
+
+    TIME(pre);
+    for (size_t i = 0; i < limit; i++) {
+        intptr_t k = (i * prime) % limit;
+        skiparray_set(sa, (void *) k, NULL);
     }
     TIME(post);
 
@@ -354,6 +396,27 @@ forget_random_access(size_t limit) {
     for (size_t i = 0; i < limit; i++) {
         intptr_t k = (i * prime) % limit;
         (void)skiparray_forget(sa, (void *) k, NULL);
+    }
+    TIME(post);
+
+    TDIFF();
+    skiparray_free(sa, NULL, NULL);
+}
+
+static void
+forget_random_access_no_values(size_t limit) {
+    struct skiparray *sa = NULL;
+    enum skiparray_new_res nres = skiparray_new(&sa_config_no_values, &sa);
+    (void)nres;
+
+    for (size_t i = 0; i < limit; i++) {
+        skiparray_set(sa, (void *)i, NULL);
+    }
+
+    TIME(pre);
+    for (size_t i = 0; i < limit; i++) {
+        intptr_t k = (i * prime) % limit;
+        (void)skiparray_forget(sa, (void *)k, NULL);
     }
     TIME(post);
 
@@ -558,13 +621,16 @@ struct benchmark {
 static struct benchmark benchmarks[] = {
     { "get_sequential", get_sequential },
     { "get_random_access", get_random_access },
+    { "get_random_access_no_values", get_random_access_no_values },
     { "get_nonexistent", get_nonexistent },
     { "set_sequential", set_sequential },
     { "set_random_access", set_random_access },
+    { "set_random_access_no_values", set_random_access_no_values },
     { "set_replacing_sequential", set_replacing_sequential },
     { "set_replacing_random_access", set_replacing_random_access },
     { "forget_sequential", forget_sequential },
     { "forget_random_access", forget_random_access },
+    { "forget_random_access_no_values", forget_random_access_no_values },
     { "forget_nonexistent", forget_nonexistent },
     { "count", count },
     { "pop_first", pop_first },
@@ -610,6 +676,9 @@ main(int argc, char **argv) {
 
     sa_config.node_size = node_size;
     if (track_memory) { sa_config.memory = memory_cb; }
+
+    memcpy(&sa_config_no_values, &sa_config, sizeof(sa_config));
+    sa_config_no_values.ignore_values = true;
 
     if (name != NULL && 0 == strcmp(name, "help")) {
         for (struct benchmark *b = &benchmarks[0]; b->name; b++) {

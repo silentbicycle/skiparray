@@ -7,6 +7,7 @@ struct skiparray {
     const uint16_t node_size;
     const uint8_t max_level;
     uint8_t height;
+    bool use_values;
     uint64_t prng_state;
 
     skiparray_memory_fun * const mem;

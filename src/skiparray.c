@@ -50,6 +50,7 @@ skiparray_new(struct skiparray_config *config,
         .node_size = node_size,
         .max_level = max_level,
         .height = root_level,
+        .use_values = !config->ignore_values,
         .prng_state = prng_state,
         .mem = mem,
         .cmp = config->cmp,
@@ -59,7 +60,7 @@ skiparray_new(struct skiparray_config *config,
     memcpy(res, &fields, sizeof(fields));
 
     struct node *root = node_alloc(root_level, node_size,
-        mem, config->udata);
+        mem, config->udata, fields.use_values);
     if (root == NULL) {
         mem(res, 0, config->udata);
         return SKIPARRAY_NEW_ERROR_MEMORY;
@@ -92,7 +93,7 @@ skiparray_free(struct skiparray *sa,
         if (cb != NULL) {
             for (size_t i = 0; i < n->count; i++) {
                 cb(n->keys[n->offset + i],
-                    n->values[n->offset + i], udata);
+                    sa->use_values ? n->values[n->offset + i] : NULL, udata);
             }
         }
         node_free(sa, n);
@@ -144,7 +145,7 @@ skiparray_get_pair(const struct skiparray *sa,
     {
         struct node *n = env.n;
         pair->key = n->keys[n->offset + env.index];
-        pair->value = n->values[n->offset + env.index];
+        pair->value = sa->use_values ? n->values[n->offset + env.index] : NULL;
         return true;
     }
     }
@@ -183,12 +184,14 @@ skiparray_set_with_pair(struct skiparray *sa, void *key, void *value,
         struct node *n = env.n;
         assert(n);
         void **k = &n->keys[n->offset + env.index];
-        void **v = &n->values[n->offset + env.index];
+        static void *the_NULL = NULL; /* safe placeholder for *v */
+        void **v = sa->use_values
+          ? &n->values[n->offset + env.index] : &the_NULL;
         if (previous_binding != NULL) {
             previous_binding->key = *k;
             previous_binding->value = *v;
         }
-        *v = value;
+        if (sa->use_values) { *v = value; }
 
         if (replace_key) { *k = key; }
 
@@ -311,7 +314,9 @@ skiparray_set_with_pair(struct skiparray *sa, void *key, void *value,
         assert(n->offset + env.index < sa->node_size);
         n->keys[n->offset + env.index] = key;
 
-        n->values[n->offset + env.index] = value;
+        if (sa->use_values) {
+            n->values[n->offset + env.index] = value;
+        }
 
         n->count++;
         LOG(2, "%s: now node %p has %" PRIu16 " pair(s)\n",
@@ -353,7 +358,8 @@ skiparray_forget(struct skiparray *sa, const void *key,
 
         if (forgotten != NULL) {
             forgotten->key = n->keys[n->offset + env.index];
-            forgotten->value = n->values[n->offset + env.index];
+            forgotten->value = sa->use_values
+              ? n->values[n->offset + env.index] : NULL;
         }
 
         if (LOG_LEVEL >= 4) {
@@ -438,7 +444,7 @@ skiparray_first(const struct skiparray *sa,
         *key = n->keys[index];
     }
 
-    if (value != NULL) {
+    if (value != NULL && sa->use_values) {
         *value = n->values[index];
     }
 
@@ -482,7 +488,7 @@ skiparray_last(const struct skiparray *sa,
         *key = n->keys[index];
     }
 
-    if (value != NULL) {
+    if (value != NULL && sa->use_values) {
         *value = n->values[index];
     }
 
@@ -508,7 +514,9 @@ skiparray_pop_first(struct skiparray *sa,
     }
 
     if (key != NULL) { *key = head->keys[head->offset]; }
-    if (value != NULL) { *value = head->values[head->offset]; }
+    if (value != NULL && sa->use_values) {
+        *value = head->values[head->offset];
+    }
     head->offset++;
     if (head->offset == sa->node_size) {
         head->offset = sa->node_size/2;
@@ -609,7 +617,9 @@ skiparray_pop_last(struct skiparray *sa,
         __func__, (void *)last, last->count);
 
     if (key != NULL) { *key = last->keys[last->offset + last->count - 1]; }
-    if (value != NULL) { *value = last->values[last->offset + last->count - 1]; }
+    if (value != NULL && sa->use_values) {
+        *value = last->values[last->offset + last->count - 1];
+    }
     last->count--;
 
     if (last->count == 0) {
@@ -793,14 +803,14 @@ skiparray_iter_get(struct skiparray_iter *iter,
         *key = iter->n->keys[n];
     }
 
-    if (value != NULL) {
+    if (value != NULL && iter->sa->use_values) {
         *value = iter->n->values[n];
     }
 }
 
 static struct node *
 node_alloc(uint8_t height, uint16_t node_size,
-    skiparray_memory_fun *mem, void *udata) {
+    skiparray_memory_fun *mem, void *udata, bool use_values) {
     LOG(2, "%s: height %u, size %" PRIu16 "\n", __func__, height, node_size);
     assert(height >= 1);
     assert(node_size >= 2);
@@ -819,9 +829,11 @@ node_alloc(uint8_t height, uint16_t node_size,
     if (keys == NULL) { goto cleanup; }
     memset(keys, 0x00, node_size * sizeof(keys[0]));
 
-    values = mem(NULL, node_size * sizeof(values[0]), udata);
-    if (values == NULL) { goto cleanup; }
-    memset(values, 0x00, node_size * sizeof(values[0]));
+    if (use_values) {
+        values = mem(NULL, node_size * sizeof(values[0]), udata);
+        if (values == NULL) { goto cleanup; }
+        memset(values, 0x00, node_size * sizeof(values[0]));
+    }
 
     struct node fields = {
         .height = height,
@@ -837,16 +849,17 @@ node_alloc(uint8_t height, uint16_t node_size,
     return res;
 
 cleanup:
-    if (res) { mem(res, 0, udata); }
-    if (keys) { mem(keys, 0, udata); }
-    if (values) { mem(values, 0, udata); }
+    if (res != NULL) { mem(res, 0, udata); }
+    if (keys != NULL) { mem(keys, 0, udata); }
+    if (values != NULL) { mem(values, 0, udata); }
     return NULL;
 }
 
 static void
 node_free(const struct skiparray *sa, struct node *n) {
+    if (n == NULL) { return; }
     sa->mem(n->keys, 0, sa->udata);
-    sa->mem(n->values, 0, sa->udata);
+    if (n->values != NULL) { sa->mem(n->values, 0, sa->udata); }
     sa->mem(n, 0, sa->udata);
 }
 
@@ -1075,7 +1088,7 @@ split_node(struct skiparray *sa,
     if (level >= sa->max_level) { level = sa->max_level - 1; }
 
     struct node *new = node_alloc(level + 1, sa->node_size,
-        sa->mem, sa->udata);
+        sa->mem, sa->udata, sa->use_values);
     if (new == NULL) {
         return false;
     }
@@ -1093,9 +1106,11 @@ split_node(struct skiparray *sa,
     memcpy(&new->keys[new->offset],
         &n->keys[n->offset + n->count - to_move],
         to_move * sizeof(n->keys[0]));
-    memcpy(&new->values[new->offset],
-        &n->values[n->offset + n->count - to_move],
-        to_move * sizeof(n->values[0]));
+    if (sa->use_values) {
+        memcpy(&new->values[new->offset],
+            &n->values[n->offset + n->count - to_move],
+            to_move * sizeof(n->values[0]));
+    }
     n->count -= to_move;
     new->count += to_move;
     new->back = n;
@@ -1285,9 +1300,11 @@ shift_pairs(struct node *n,
     memmove(&n->keys[to_pos],
         &n->keys[from_pos],
         count * sizeof(n->keys[0]));
-    memmove(&n->values[to_pos],
-        &n->values[from_pos],
-        count * sizeof(n->values[0]));
+    if (n->values != NULL) {
+        memmove(&n->values[to_pos],
+            &n->values[from_pos],
+            count * sizeof(n->values[0]));
+    }
 }
 
 static void
@@ -1296,9 +1313,11 @@ move_pairs(struct node *to, struct node *from,
     memmove(&to->keys[to_pos],
         &from->keys[from_pos],
         count * sizeof(to->keys[0]));
-    memmove(&to->values[to_pos],
-        &from->values[from_pos],
-        count * sizeof(to->values[0]));
+    if (to->values != NULL) {
+        memmove(&to->values[to_pos],
+            &from->values[from_pos],
+            count * sizeof(to->values[0]));
+    }
 }
 
 static void
@@ -1307,7 +1326,8 @@ dump_raw_bindings(const char *tag,
     if (LOG_LEVEL > 4) {
         LOG(4, "====== %s\n", tag);
         for (size_t i = 0; i < sa->node_size; i++) {
-            LOG(4, "%zu: %p => %p\n", i, (void *)n->keys[i], (void *)n->values[i]);
+            LOG(4, "%zu: %p => %p\n", i, (void *)n->keys[i],
+                n->values ? (void *)n->values[i] : NULL);
         }
     }
 }

@@ -4,7 +4,9 @@
 
 ### API Changes
 
-None.
+Added `.ignore_values` flag to `struct skiparray_config` -- this
+eliminates unnecessary allocation when only the skiparray's keys
+are being used.
 
 ### Bug Fixes
 
