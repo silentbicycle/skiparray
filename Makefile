@@ -35,11 +35,13 @@ all: library
 everything: library ${BUILD}/test_${PROJECT} ${BUILD}/benchmarks
 
 OBJS=		${BUILD}/skiparray.o \
+		${BUILD}/skiparray_fold.o \
 
 TEST_OBJS=	${OBJS} \
 		${BUILD}/test_${PROJECT}.o \
 		${BUILD}/test_${PROJECT}_basic.o \
 		${BUILD}/test_${PROJECT}_builder.o \
+		${BUILD}/test_${PROJECT}_fold.o \
 		${BUILD}/test_${PROJECT}_prop.o \
 		${BUILD}/test_${PROJECT}_integration.o \
 		${BUILD}/test_${PROJECT}_invariants.o \

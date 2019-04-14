@@ -3,11 +3,6 @@
 
 #include "skiparray_internal_types.h"
 
-#include <string.h>
-#include <assert.h>
-#include <inttypes.h>
-#include <stdio.h>
-
 #define LOG_LEVEL 0
 #define LOG_FILE stdout
 #define LOG(LVL, ...)                                                  \

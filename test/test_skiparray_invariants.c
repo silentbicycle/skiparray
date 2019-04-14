@@ -28,6 +28,31 @@ int test_skiparray_cmp_intptr_t(const void *ka,
     return (a < b ? -1 : a > b ? 1 : 0);
 }
 
+struct skiparray *
+test_skiparray_sequential_build(size_t limit) {
+    struct skiparray_builder *b = NULL;
+
+    struct skiparray_config config = {
+        .cmp = test_skiparray_cmp_intptr_t,
+    };
+
+    enum skiparray_builder_new_res bnres =
+      skiparray_builder_new(&config, false, &b);
+    (void)bnres;
+
+    for (uintptr_t i = 0; i < limit; i++) {
+        uintptr_t k = i;
+        enum skiparray_builder_append_res bares =
+          skiparray_builder_append(b, (void *) k,
+              (config.ignore_values ? NULL : (void *) k));
+        (void)bares;
+    }
+
+    struct skiparray *sa = NULL;
+    skiparray_builder_finish(&b, &sa);
+    return sa;
+}
+
 bool test_skiparray_invariants(struct skiparray *sa, int verbosity) {
     size_t counts[sa->max_level + 1];
     memset(counts, 0, (1 + sa->max_level) * sizeof(size_t));

@@ -3,6 +3,11 @@
 
 #include "skiparray.h"
 
+#include <string.h>
+#include <assert.h>
+#include <inttypes.h>
+#include <stdio.h>
+
 struct skiparray {
     const uint16_t node_size;
     const uint8_t max_level;

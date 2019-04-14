@@ -760,6 +760,8 @@ skiparray_iter_next(struct skiparray_iter *iter) {
     assert(iter != NULL);
 
     iter->index++;
+    LOG(4, "%s: index %"PRIu16", count %"PRIu16"\n",
+        __func__, iter->index, iter->n->count);
 
     if (iter->index == iter->n->count) {
         if (iter->n->fwd[0] == NULL) {
@@ -775,6 +777,9 @@ skiparray_iter_next(struct skiparray_iter *iter) {
 enum skiparray_iter_step_res
 skiparray_iter_prev(struct skiparray_iter *iter) {
     assert(iter != NULL);
+
+    LOG(4, "%s: index %"PRIu16", count %"PRIu16"\n",
+        __func__, iter->index, iter->n->count);
 
     if (iter->index == 0) {
         if (iter->n->back == NULL) {

@@ -26,7 +26,7 @@
 #define SKIPARRAY_VERSION_MINOR 1
 #define SKIPARRAY_VERSION_PATCH 1
 
-/* Default level limit as thes skiparray grows. */
+/* Default level limit as the skiparray grows. */
 #define SKIPARRAY_DEF_MAX_LEVEL 16
 
 /* Max value allowed for max_level option. */
@@ -326,5 +326,88 @@ skiparray_builder_append(struct skiparray_builder *b,
 void
 skiparray_builder_finish(struct skiparray_builder **b,
     struct skiparray **sa);
+
+/* Opaque type for a handle to a fold in progress. */
+struct skiparray_fold_state;
+
+/* Should the fold start from the left (i.e., ascending keys)
+ * or right (descending keys)? */
+enum skiparray_fold_type {
+    SKIPARRAY_FOLD_LEFT,        /* left-to-right / ascending */
+    SKIPARRAY_FOLD_RIGHT,       /* right-to-left / descending */
+};
+
+/* A function applied to a (key, value) pair, and potentially
+ * updating passed-in user state (udata). The udata pointer
+ * is opaque to the skiparray library.
+ *
+ * Note: key and value are not const because they may be passed
+ * in to skiparray_builder_append, but they should not be
+ * mutated.
+ * todo: Is there a better way to encode/enforce this? */
+typedef void
+skiparray_fold_fun(void *key, void *value, void *udata);
+
+/* If multiple skiparrays have keys that compare equal, determine which
+ * key and value to use. The keys and values will appear in the same
+ * order as their skiparrays first appeared in the call to
+ * skiparray_fold_multi. The keys all compare equal, but may be
+ * distinct instances of that key.
+ *
+ * This function should return the offset for which key to use
+ * (unchanged), and set *merged_value to the value to use (if the
+ * skiparrays have values). This can point to a freshly allocated value
+ * or to one of the existing ones, but in the latter case, the free
+ * callback will need to avoid double frees.
+ *
+ * Returning a key choice >= count will lead to an assertion failure. */
+typedef uint8_t
+skiparray_fold_merge_fun(uint8_t count,
+    /* todo: make the input arrays const */
+    const void **keys, void **values, void **merged_value, void *udata);
+
+/* Start a fold over one a skiparray.
+ * The skiparray will be locked while the fold is active. */
+enum skiparray_fold_res {
+    SKIPARRAY_FOLD_OK,
+    SKIPARRAY_FOLD_ERROR_MISUSE = -1,
+    SKIPARRAY_FOLD_ERROR_MEMORY = -2,
+};
+enum skiparray_fold_res
+skiparray_fold(enum skiparray_fold_type direction,
+    struct skiparray *sa, skiparray_fold_fun *cb, void *udata,
+    struct skiparray_fold_state **fs);
+
+/* Start a fold over multiple skiparrays.
+ * The callback will be called on each key in ascending or descending
+ * order, depending on DIRECTION. If multiple skiparrays' next available
+ * keys compare equal, then the merge callback will be called to merge
+ * the options to a single key, value pair first.
+ *
+ * As this is built on top of the iteration API, all the skiparrays
+ * will be locked while the fold is active.
+ *
+ * Calling this on skiparrays with non-matching cmp or memory callbacks
+ * will return ERROR_MISUSE. Similarly, either all or none of them must
+ * use values. */
+enum skiparray_fold_res
+skiparray_fold_multi(enum skiparray_fold_type direction,
+    uint8_t skiparray_count, struct skiparray **skiparrays,
+    skiparray_fold_fun *cb, skiparray_fold_merge_fun *merge, void *udata,
+    struct skiparray_fold_state **fs);
+
+/* Halt a fold in progress and free fs. */
+void
+skiparray_fold_halt(struct skiparray_fold_state *fs);
+
+/* Step a fold in progress. This will call the appropriate callbacks and
+ * return OK if there are more bindings to process, or free fs and
+ * return DONE. */
+enum skiparray_fold_next_res {
+    SKIPARRAY_FOLD_NEXT_OK,
+    SKIPARRAY_FOLD_NEXT_DONE,
+};
+enum skiparray_fold_next_res
+skiparray_fold_next(struct skiparray_fold_state *fs);
 
 #endif
