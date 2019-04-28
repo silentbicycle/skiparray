@@ -677,7 +677,7 @@ main(int argc, char **argv) {
             for (struct benchmark *b = &benchmarks[0]; b->name; b++) {
                 memory_used = 0;
                 memory_hwm = 0;
-                if (name == NULL || 0 == strncmp(name, b->name, namelen)) {
+                if (name == NULL || 0 == strcmp(name, b->name)) {
                     b->fun(limits[l_i]);
                 }
             }

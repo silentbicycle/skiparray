@@ -32,6 +32,8 @@ usage info.
 The benchmarking CLI can now take multiple, comma-separated limits (e.g.
 `-l 1000,10000,100000`), to benchmarks behavior as input grows.
 
+The benchmarking CLI's `-n` flag now uses exact name matching.
+
 
 ## v0.1.1 - 2019-04-11
 
