@@ -51,6 +51,7 @@ get_usec_delta(struct timeval *pre, struct timeval *post) {
 
 static const int prime = 7919;
 static size_t cycles = DEF_CYCLES;
+static uint64_t rng_seed = 0;
 static uint8_t limit_count = 0;
 static size_t limits[MAX_LIMITS];
 static size_t node_size = SKIPARRAY_DEF_NODE_SIZE;
@@ -62,11 +63,12 @@ static size_t memory_hwm;       /* allocation high-water mark */
 static void
 usage(void) {
     fprintf(stderr, "Usage: benchmarks [-c <cycles>] [-l <limit>] [-m]\n");
-    fprintf(stderr, "                  [-n <name>] [-s <size>]\n\n");
+    fprintf(stderr, "                  [-n <name>] [-r <seed>] [-s <size>]\n\n");
     fprintf(stderr, "  -c: run multiple cycles of benchmarks (def. 1)\n");
     fprintf(stderr, "  -l: set limit(s); comma-separated, default %zu.\n", DEF_LIMIT);
     fprintf(stderr, "  -m: track the memory high-water mark, in MB and words/entry.\n");
     fprintf(stderr, "  -n: run one benchmark. 'help' prints available benchmarks.\n");
+    fprintf(stderr, "  -r: set RNG seed.\n");
     fprintf(stderr, "  -s: node size, default %d.\n", SKIPARRAY_DEF_NODE_SIZE);
     exit(EXIT_FAILURE);
 }
@@ -99,7 +101,7 @@ parse_limits(char *optarg) {
 static void
 handle_args(int argc, char **argv) {
     int fl;
-    while ((fl = getopt(argc, argv, "hc:l:mn:s:")) != -1) {
+    while ((fl = getopt(argc, argv, "hc:l:mn:r:s:")) != -1) {
         switch (fl) {
         case 'h':               /* help */
             usage();
@@ -122,6 +124,9 @@ handle_args(int argc, char **argv) {
             break;
         case 'n':               /* name */
             name = optarg;
+            break;
+        case 'r':               /* rng_seed */
+            rng_seed = strtoul(optarg, NULL, 0);
             break;
         case 's':               /* node_size */
             node_size = strtoul(optarg, NULL, 0);
@@ -148,7 +153,6 @@ cmp_intptr_t(const void *ka,
 
 static struct skiparray_config sa_config = {
     .cmp = cmp_intptr_t,
-    .seed = 0,
 };
 
 static struct skiparray_config sa_config_no_values;
@@ -655,6 +659,7 @@ main(int argc, char **argv) {
     }
 
     sa_config.node_size = node_size;
+    sa_config.seed = rng_seed;
     if (track_memory) { sa_config.memory = memory_cb; }
 
     memcpy(&sa_config_no_values, &sa_config, sizeof(sa_config));

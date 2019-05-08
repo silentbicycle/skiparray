@@ -34,6 +34,8 @@ The benchmarking CLI can now take multiple, comma-separated limits (e.g.
 
 The benchmarking CLI's `-n` flag now uses exact name matching.
 
+Added the benchmarking CLI's `-r` flag, to set the RNG seed.
+
 
 ## v0.1.1 - 2019-04-11
 
