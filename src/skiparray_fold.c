@@ -273,6 +273,7 @@ call_with_next(struct skiparray_fold_state *fs, size_t count) {
     }
 
     assert(first->state == PS_AVAILABLE_EQ);
+    assert(fs->cbs.merge != NULL);
 
     /* Given N key/value pairs, choose a key (by ID) and a merged value
      * (which can point to an existing value or a new allocation). */
