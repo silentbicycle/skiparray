@@ -374,12 +374,12 @@ enum skiparray_fold_res {
     SKIPARRAY_FOLD_ERROR_MEMORY = -2,
 };
 enum skiparray_fold_res
-skiparray_fold(enum skiparray_fold_type direction,
+skiparray_fold_init(enum skiparray_fold_type direction,
     struct skiparray *sa, skiparray_fold_fun *cb, void *udata,
     struct skiparray_fold_state **fs);
 
 enum skiparray_fold_res
-skiparray_fold_onepass(enum skiparray_fold_type direction,
+skiparray_fold(enum skiparray_fold_type direction,
     struct skiparray *sa, skiparray_fold_fun *cb, void *udata);
 
 /* Start a fold over multiple skiparrays.
@@ -395,7 +395,7 @@ skiparray_fold_onepass(enum skiparray_fold_type direction,
  * will return ERROR_MISUSE. Similarly, either all or none of them must
  * use values. */
 enum skiparray_fold_res
-skiparray_fold_multi(enum skiparray_fold_type direction,
+skiparray_fold_multi_init(enum skiparray_fold_type direction,
     uint8_t skiparray_count, struct skiparray **skiparrays,
     skiparray_fold_fun *cb, skiparray_fold_merge_fun *merge, void *udata,
     struct skiparray_fold_state **fs);

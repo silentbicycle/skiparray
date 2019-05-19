@@ -23,7 +23,7 @@ TEST sub_forward_and_reverse(size_t limit) {
 
         struct skiparray_fold_state *fs = NULL;
         ASSERT_EQ_FMT(SKIPARRAY_FOLD_OK,
-            skiparray_fold(SKIPARRAY_FOLD_LEFT, sa,
+            skiparray_fold_init(SKIPARRAY_FOLD_LEFT, sa,
                 sub_key_from_actual, (void *)&acc, &fs), "%d");
 
         while (skiparray_fold_next(fs) != SKIPARRAY_FOLD_NEXT_DONE) {
@@ -43,7 +43,7 @@ TEST sub_forward_and_reverse(size_t limit) {
 
         struct skiparray_fold_state *fs = NULL;
         ASSERT_EQ_FMT(SKIPARRAY_FOLD_OK,
-            skiparray_fold(SKIPARRAY_FOLD_RIGHT, sa,
+            skiparray_fold_init(SKIPARRAY_FOLD_RIGHT, sa,
                 sub_key_from_actual, (void *)&acc, &fs), "%d");
 
         while (skiparray_fold_next(fs) != SKIPARRAY_FOLD_NEXT_DONE) {
@@ -74,7 +74,7 @@ TEST sub_forward_and_reverse_halt_partway(size_t limit) {
 
         struct skiparray_fold_state *fs = NULL;
         ASSERT_EQ_FMT(SKIPARRAY_FOLD_OK,
-            skiparray_fold(SKIPARRAY_FOLD_LEFT, sa,
+            skiparray_fold_init(SKIPARRAY_FOLD_LEFT, sa,
                 sub_key_from_actual, (void *)&acc, &fs), "%d");
 
         uintptr_t steps_i = 0;
@@ -96,7 +96,7 @@ TEST sub_forward_and_reverse_halt_partway(size_t limit) {
 
         struct skiparray_fold_state *fs = NULL;
         ASSERT_EQ_FMT(SKIPARRAY_FOLD_OK,
-            skiparray_fold(SKIPARRAY_FOLD_RIGHT, sa,
+            skiparray_fold_init(SKIPARRAY_FOLD_RIGHT, sa,
                 sub_key_from_actual, (void *)&acc, &fs), "%d");
 
         uintptr_t steps_i = 0;
@@ -194,7 +194,7 @@ TEST fold_multi_and_check_merge(size_t limit) {
     /* Use a multi-fold to merge them, passing in a new builder */
     struct skiparray_fold_state *fs = NULL;
     ASSERT_EQ_FMT(SKIPARRAY_FOLD_OK,
-        skiparray_fold_multi(SKIPARRAY_FOLD_LEFT,
+        skiparray_fold_multi_init(SKIPARRAY_FOLD_LEFT,
             MUL_CT, sas, append_cb, merge_cb, (void *)&env,
             &fs),
         "%d");
@@ -257,7 +257,7 @@ TEST onepass_sum(size_t limit) {
 
     size_t actual = 0;
     ASSERT_EQ_FMT(SKIPARRAY_FOLD_OK,
-        skiparray_fold_onepass(SKIPARRAY_FOLD_LEFT,
+        skiparray_fold(SKIPARRAY_FOLD_LEFT,
             sa, sum_values, &actual), "%d");
     ASSERT_EQ_FMT(exp, actual, "%zu");
 
