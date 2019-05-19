@@ -24,6 +24,7 @@ conventional [Binary search tree][bst].
     arrays; there are no sudden memory spikes caused by structures
     doubling in size.
 
+
 - **High locality**
 
     Searches start by following the top layer's links, which are likely
