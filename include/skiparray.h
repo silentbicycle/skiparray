@@ -378,6 +378,10 @@ skiparray_fold(enum skiparray_fold_type direction,
     struct skiparray *sa, skiparray_fold_fun *cb, void *udata,
     struct skiparray_fold_state **fs);
 
+enum skiparray_fold_res
+skiparray_fold_onepass(enum skiparray_fold_type direction,
+    struct skiparray *sa, skiparray_fold_fun *cb, void *udata);
+
 /* Start a fold over multiple skiparrays.
  * The callback will be called on each key in ascending or descending
  * order, depending on DIRECTION. If multiple skiparrays' next available

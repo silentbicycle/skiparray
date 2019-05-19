@@ -241,6 +241,30 @@ TEST fold_multi_and_check_merge(size_t limit) {
     PASS();
 }
 
+static void
+sum_values(void *key, void *value, void *udata) {
+    uintptr_t *actual = udata;
+    assert(actual != NULL);
+    (void)key;
+    (*actual) += (uintptr_t)value;
+}
+
+TEST onepass_sum(size_t limit) {
+    struct skiparray *sa = test_skiparray_sequential_build(limit);
+
+    size_t exp = 0;
+    for (size_t i = 0; i < limit; i++) { exp += i; }
+
+    size_t actual = 0;
+    ASSERT_EQ_FMT(SKIPARRAY_FOLD_OK,
+        skiparray_fold_onepass(SKIPARRAY_FOLD_LEFT,
+            sa, sum_values, &actual), "%d");
+    ASSERT_EQ_FMT(exp, actual, "%zu");
+
+    skiparray_free(sa, NULL, NULL);
+    PASS();
+}
+
 SUITE(fold) {
     for (size_t limit = 10; limit <= 1000000; limit *= 10) {
         char buf[64];
@@ -254,5 +278,7 @@ SUITE(fold) {
         RUN_TESTp(sub_forward_and_reverse_halt_partway, limit);
         SET_SUFFIX();
         RUN_TESTp(fold_multi_and_check_merge, limit);
+        SET_SUFFIX();
+        RUN_TESTp(onepass_sum, limit);
     }
 }

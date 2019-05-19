@@ -31,6 +31,19 @@ skiparray_fold(enum skiparray_fold_type type,
 }
 
 enum skiparray_fold_res
+skiparray_fold_onepass(enum skiparray_fold_type direction,
+    struct skiparray *sa, skiparray_fold_fun *cb, void *udata) {
+    struct skiparray_fold_state *fs = NULL;
+    enum skiparray_fold_res fres = skiparray_fold(direction,
+        sa, cb, udata, &fs);
+    if (fres != SKIPARRAY_FOLD_OK) { return fres; }
+
+    while (skiparray_fold_next(fs) != SKIPARRAY_FOLD_NEXT_DONE) {}
+
+    return SKIPARRAY_FOLD_OK;
+}
+
+enum skiparray_fold_res
 skiparray_fold_multi(enum skiparray_fold_type type,
     uint8_t skiparray_count, struct skiparray **skiparrays,
     skiparray_fold_fun *cb, skiparray_fold_merge_fun *merge, void *udata,
