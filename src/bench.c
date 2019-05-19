@@ -674,9 +674,6 @@ main(int argc, char **argv) {
 
     TIME(pre);
 
-    size_t namelen = 0;
-    if (name != NULL) { namelen = strlen(name); }
-
     for (size_t l_i = 0; l_i < limit_count; l_i++) {
         for (size_t c_i = 0; c_i < cycles; c_i++) {
             for (struct benchmark *b = &benchmarks[0]; b->name; b++) {
