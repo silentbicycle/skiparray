@@ -16,6 +16,13 @@ significantly more efficient than constructing by repeatedly calling
 `skiparray_set`, because it avoids redundant searches for where to put
 the new binding.
 
+Added an incremental fold interface, with left and right folds over one
+or more skiparrays' values. If there are multiple equal keys, a merge
+callback will be called to merge the options to a single (key, value)
+pair first. This is built on top of the iteration interface, so the
+skiparray(s) will be locked during the fold.
+
+
 ### Bug Fixes
 
 `skiparray_new` could previously return `SKIPARRAY_NEW_ERROR_NULL` if
