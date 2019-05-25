@@ -21,12 +21,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-/* Version 0.1.1 */
+/* Version 0.2.0 */
 #define SKIPARRAY_VERSION_MAJOR 0
-#define SKIPARRAY_VERSION_MINOR 1
-#define SKIPARRAY_VERSION_PATCH 1
+#define SKIPARRAY_VERSION_MINOR 2
+#define SKIPARRAY_VERSION_PATCH 0
 
-/* Default level limit as thes skiparray grows. */
+/* Default level limit as the skiparray grows. */
 #define SKIPARRAY_DEF_MAX_LEVEL 16
 
 /* Max value allowed for max_level option. */
@@ -59,6 +59,11 @@ typedef void *skiparray_memory_fun(void *p, size_t nsize, void *udata);
 typedef int skiparray_cmp_fun(const void *ka,
     const void *kb, void *udata);
 
+/* Callback for freeing keys and/or values in a skiparray, as its
+ * structure is freed. */
+typedef void skiparray_free_fun(void *key,
+    void *value, void *udata);
+
 /* Return the level for a new skiparray node (0 <= X < max_level).
  * This should be calculated based on PRNG_STATE_IN (or similar state
  * in UDATA), and update *PRNG_STATE_OUT or UDATA to a new random
@@ -79,9 +84,15 @@ struct skiparray_config {
      * A max_level of 0 will use the default. */
     uint8_t max_level;
     uint64_t seed;
+    /* If this flag is set, then no memory will be allocated for values,
+     * and value parameters will be ignored. If only the keys are being
+     * used (as an ordered set), then this will cut memory usage in
+     * half, and make operations faster by reducing cache misses. */
+    bool ignore_values;
 
     skiparray_cmp_fun *cmp;       /* required */
     skiparray_memory_fun *memory; /* optional */
+    skiparray_free_fun *free;     /* optional */
     skiparray_level_fun *level;   /* optional */
     void *udata;                  /* callback data, opaque to library */
 };
@@ -94,16 +105,14 @@ enum skiparray_new_res {
     SKIPARRAY_NEW_ERROR_MEMORY = -3,
 };
 enum skiparray_new_res
-skiparray_new(struct skiparray_config *config,
+skiparray_new(const struct skiparray_config *config,
     struct skiparray **sa);
 
-/* Free a skiparray. If CB is non-NULL, then it will be called with
- * every key, value pair and udata. Any iterators associated with this
- * skiparray will be freed, and pointers to them will become stale. */
-typedef void skiparray_free_fun(void *key,
-    void *value, void *udata);
-void skiparray_free(struct skiparray *sa,
-    skiparray_free_fun *cb, void *udata);
+/* Free a skiparray. If the skiparray's configuration's free callback
+ * was non-NULL, then it will be called with every key, value pair and
+ * udata. Any iterators associated with this skiparray will be freed,
+ * and pointers to them will become stale. */
+void skiparray_free(struct skiparray *sa);
 
 /* Get the value associated with a key.
  * Returns whether the value was found. */
@@ -272,5 +281,154 @@ skiparray_iter_prev(struct skiparray_iter *iter);
 void
 skiparray_iter_get(struct skiparray_iter *iter,
     void **key, void **value);
+
+/* Opaque handle for a skiparray builder. This can be used to
+ * incrementally construct a skiparray more efficiently than by
+ * repeatedly calling `skiparray_set`, because only the builder
+ * is allowed to modify the skiparray until it's complete.
+ * Key/value pairs must be appended in ascending order. */
+struct skiparray_builder;
+
+/* Allocate a skiparray builder.
+ *
+ * If skip_ascending_key_check is true, then the builder will save on
+ * overhead from a comparison per append, but appending a key that is
+ * not > the previous may silently corrupt data, trigger assertions
+ * later, etc. You have been warned. */
+enum skiparray_builder_new_res {
+    SKIPARRAY_BUILDER_NEW_OK,
+    SKIPARRAY_BUILDER_NEW_ERROR_MISUSE = -1,
+    SKIPARRAY_BUILDER_NEW_ERROR_MEMORY = -2,
+};
+enum skiparray_builder_new_res
+skiparray_builder_new(const struct skiparray_config *cfg,
+    bool skip_ascending_key_check, struct skiparray_builder **builder);
+
+/* Free (and abandon) a skiparray that is still being built. */
+void
+skiparray_builder_free(struct skiparray_builder *b);
+
+/* Append a key/value pair with the builder. The key should be > the
+ * previous key, according to the builder's comparison function.
+ *
+ * If doing an ascending key check, it will compare the new key against
+ * the previously appended key (if any), and either append or return
+ * ERROR_MISUSE and leave the builder unchanged. */
+enum skiparray_builder_append_res {
+    SKIPARRAY_BUILDER_APPEND_OK,
+    SKIPARRAY_BUILDER_APPEND_ERROR_MISUSE = -1,
+    SKIPARRAY_BUILDER_APPEND_ERROR_MEMORY = -2,
+};
+enum skiparray_builder_append_res
+skiparray_builder_append(struct skiparray_builder *b,
+    void *key, void *value);
+
+/* Finish a builder, converting it to a skiparray.
+ * The builder will be freed, and *b will be set to NULL.
+ * This operation cannot fail. */
+void
+skiparray_builder_finish(struct skiparray_builder **b,
+    struct skiparray **sa);
+
+/* Opaque type for a handle to a fold in progress. */
+struct skiparray_fold_state;
+
+/* Should the fold start from the left (i.e., ascending keys)
+ * or right (descending keys)? */
+enum skiparray_fold_type {
+    SKIPARRAY_FOLD_LEFT,        /* left-to-right / ascending */
+    SKIPARRAY_FOLD_RIGHT,       /* right-to-left / descending */
+};
+
+/* A function applied to a (key, value) pair, and potentially
+ * updating passed-in user state (udata). The udata pointer
+ * is opaque to the skiparray library.
+ *
+ * Note: key and value are not const because they may be passed
+ * in to skiparray_builder_append, but they should not be
+ * mutated.
+ * todo: Is there a better way to encode/enforce this? */
+typedef void
+skiparray_fold_fun(void *key, void *value, void *udata);
+
+/* If multiple skiparrays have keys that compare equal, determine which
+ * key and value to use. The keys and values will appear in the same
+ * order as their skiparrays first appeared in the call to
+ * skiparray_fold_multi. The keys all compare equal, but may be
+ * distinct instances of that key.
+ *
+ * This function should return the offset for which key to use
+ * (unchanged), and set *merged_value to the value to use (if the
+ * skiparrays have values). This can point to a freshly allocated value
+ * or to one of the existing ones, but in the latter case, the free
+ * callback will need to avoid double frees.
+ *
+ * Returning a key choice >= count will lead to an assertion failure. */
+typedef uint8_t
+skiparray_fold_merge_fun(uint8_t count,
+    /* todo: make the input arrays const */
+    const void **keys, void **values, void **merged_value, void *udata);
+
+/* Start a fold over one a skiparray.
+ * The skiparray will be locked while the fold is active. */
+enum skiparray_fold_res {
+    SKIPARRAY_FOLD_OK,
+    SKIPARRAY_FOLD_ERROR_MISUSE = -1,
+    SKIPARRAY_FOLD_ERROR_MEMORY = -2,
+};
+enum skiparray_fold_res
+skiparray_fold_init(enum skiparray_fold_type direction,
+    struct skiparray *sa, skiparray_fold_fun *cb, void *udata,
+    struct skiparray_fold_state **fs);
+
+enum skiparray_fold_res
+skiparray_fold(enum skiparray_fold_type direction,
+    struct skiparray *sa, skiparray_fold_fun *cb, void *udata);
+
+/* Start a fold over multiple skiparrays.
+ * The callback will be called on each key in ascending or descending
+ * order, depending on DIRECTION. If multiple skiparrays' next available
+ * keys compare equal, then the merge callback will be called to merge
+ * the options to a single key, value pair first.
+ *
+ * As this is built on top of the iteration API, all the skiparrays
+ * will be locked while the fold is active.
+ *
+ * Calling this on skiparrays with non-matching cmp, free, or memory
+ * callbacks will return ERROR_MISUSE. Similarly, either all or none of
+ * them must use values. */
+enum skiparray_fold_res
+skiparray_fold_multi_init(enum skiparray_fold_type direction,
+    uint8_t skiparray_count, struct skiparray **skiparrays,
+    skiparray_fold_fun *cb, skiparray_fold_merge_fun *merge, void *udata,
+    struct skiparray_fold_state **fs);
+
+/* Halt a fold in progress and free fs. */
+void
+skiparray_fold_halt(struct skiparray_fold_state *fs);
+
+/* Step a fold in progress. This will call the appropriate callbacks and
+ * return OK if there are more bindings to process, or free fs and
+ * return DONE. */
+enum skiparray_fold_next_res {
+    SKIPARRAY_FOLD_NEXT_OK,
+    SKIPARRAY_FOLD_NEXT_DONE,
+};
+enum skiparray_fold_next_res
+skiparray_fold_next(struct skiparray_fold_state *fs);
+
+/* Filter function: given a key/value pair, indicate whether to add it
+ * to the skiparray that skiparray_filter is buliding. */
+typedef bool
+skiparray_filter_fun(const void *key, const void *value, void *udata);
+
+/* Allocate a new skiparray, containing a subset of another's
+ * key/value pairs. The new skiparray will have the same comparison
+ * and memory callbacks as the original.
+ *
+ * Returns NULL on allocation failure, or the new skiparray. */
+struct skiparray *
+skiparray_filter(struct skiparray *sa,
+    skiparray_filter_fun *fun, void *udata);
 
 #endif

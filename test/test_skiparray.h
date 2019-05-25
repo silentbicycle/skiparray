@@ -12,7 +12,10 @@
 bool test_skiparray_invariants(struct skiparray *sa, int verbosity);
 
 SUITE_EXTERN(basic);
+SUITE_EXTERN(builder);
+SUITE_EXTERN(fold);
 SUITE_EXTERN(prop);
+SUITE_EXTERN(hof);
 SUITE_EXTERN(integration);
 
 struct test_env {
@@ -85,5 +88,8 @@ extern const struct theft_type_info type_info_skiparray_operations;
 
 int test_skiparray_cmp_intptr_t(const void *ka,
     const void *kb, void *udata);
+
+struct skiparray *
+test_skiparray_sequential_build(size_t limit);
 
 #endif

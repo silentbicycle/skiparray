@@ -3,14 +3,21 @@
 
 #include "skiparray.h"
 
+#include <string.h>
+#include <assert.h>
+#include <inttypes.h>
+#include <stdio.h>
+
 struct skiparray {
     const uint16_t node_size;
     const uint8_t max_level;
     uint8_t height;
+    bool use_values;
     uint64_t prng_state;
 
     skiparray_memory_fun * const mem;
     skiparray_cmp_fun * const cmp;
+    skiparray_free_fun * const free;
     skiparray_level_fun * const level;
     void *udata;
 
@@ -20,6 +27,16 @@ struct skiparray {
      * Every node is on level 0; a level-1 node will also
      * be linked to nodes[1], etc. */
     struct node *nodes[];
+};
+
+struct skiparray_builder {
+    struct skiparray *sa;
+    struct node *last;
+    bool check_ascending;
+    bool has_prev_key;
+    void *prev_key;
+
+    struct node *trail[];
 };
 
 struct node {

@@ -41,6 +41,7 @@ TEST symbol_table(size_t limit) {
     struct skiparray *sa = NULL;
     struct skiparray_config cfg = {
         .cmp = cmp_symbol,
+        .free = free_symbol,
     };
     ASSERT_EQ_FMT(SKIPARRAY_NEW_OK, skiparray_new(&cfg, &sa), "%d");
 
@@ -95,7 +96,7 @@ TEST symbol_table(size_t limit) {
         ASSERT_EQ_FMT((size_t)2, (size_t)(uintptr_t)p.value, "%zu");
     }
 
-    skiparray_free(sa, free_symbol, NULL);
+    skiparray_free(sa);
     PASS();
 }
 

@@ -18,7 +18,7 @@ static struct skiparray *init_with_pairs(size_t limit) {
                     __func__, (void *)x, (void *)x);
             }
             if (skiparray_set(sa, x, x) != SKIPARRAY_SET_BOUND) {
-                skiparray_free(sa, NULL, NULL);
+                skiparray_free(sa);
                 return NULL;
             }
 
@@ -54,7 +54,7 @@ TEST set_and_forget_lowest(size_t limit) {
         ASSERT(test_skiparray_invariants(sa, verbosity - 1));
     }
 
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
     PASS();
 }
 
@@ -79,7 +79,7 @@ TEST set_and_forget_highest(size_t limit) {
         if (i == 0) { break; }
     }
 
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
     PASS();
 }
 
@@ -101,7 +101,7 @@ TEST set_and_forget_interleaved(size_t limit) {
                 __func__, (void *)x, (void *)x);
         }
         if (skiparray_set(sa, x, x) != SKIPARRAY_SET_BOUND) {
-            skiparray_free(sa, NULL, NULL);
+            skiparray_free(sa);
             FAILm("set failure");
         }
 
@@ -114,7 +114,7 @@ TEST set_and_forget_interleaved(size_t limit) {
         ASSERT(test_skiparray_invariants(sa, verbosity - 1));
     }
 
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
     PASS();
 }
 
@@ -140,7 +140,7 @@ TEST set_and_pop_first(size_t limit) {
         ASSERT(test_skiparray_invariants(sa, verbosity > 1));
     }
 
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
     PASS();
 }
 
@@ -166,7 +166,7 @@ TEST set_and_pop_last(size_t limit) {
         ASSERT(test_skiparray_invariants(sa, verbosity > 1));
     }
 
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
     PASS();
 }
 
@@ -288,7 +288,7 @@ TEST iteration_locks_collection(bool free_newest_first) {
     ASSERT_EQ_FMT((uintptr_t)12345, (uintptr_t)k, "%zu");
     ASSERT_EQ_FMT((uintptr_t)23, (uintptr_t)v, "%zu");
 
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
     PASS();
 }
 
@@ -387,7 +387,7 @@ TEST iteration(void) {
     }
 
     /* freeing the skiparray should also free any pending iterators */
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
     PASS();
 }
 
