@@ -54,6 +54,7 @@ skiparray_new(const struct skiparray_config *config,
         .prng_state = prng_state,
         .mem = mem,
         .cmp = config->cmp,
+        .free = config->free,
         .level = level,
         .udata = config->udata,
     };
@@ -84,16 +85,15 @@ skiparray_new(const struct skiparray_config *config,
 }
 
 void
-skiparray_free(struct skiparray *sa,
-    skiparray_free_fun *cb, void *udata) {
+skiparray_free(struct skiparray *sa) {
     assert(sa != NULL);
     struct node *n = sa->nodes[0];
     while (n != NULL) {
         struct node *next = n->fwd[0];
-        if (cb != NULL) {
+        if (sa->free != NULL) {
             for (size_t i = 0; i < n->count; i++) {
-                cb(n->keys[n->offset + i],
-                    sa->use_values ? n->values[n->offset + i] : NULL, udata);
+                sa->free(n->keys[n->offset + i],
+                    sa->use_values ? n->values[n->offset + i] : NULL, sa->udata);
             }
         }
         node_free(sa, n);
@@ -837,7 +837,7 @@ skiparray_builder_new(const struct skiparray_config *cfg,
       + sa->max_level * sizeof(b->trail[0]);
     b = sa->mem(NULL, alloc_size, sa->udata);
     if (b == NULL) {
-        skiparray_free(sa, NULL, NULL);
+        skiparray_free(sa);
         return SKIPARRAY_BUILDER_NEW_ERROR_MEMORY;
     }
     memset(b, 0x00, alloc_size);
@@ -862,13 +862,12 @@ skiparray_builder_new(const struct skiparray_config *cfg,
 }
 
 void
-skiparray_builder_free(struct skiparray_builder *b,
-    skiparray_free_fun *cb, void *udata) {
+skiparray_builder_free(struct skiparray_builder *b) {
     if (b == NULL) { return; }
     assert(b->sa != NULL);
     struct skiparray *sa = b->sa;
     b->sa->mem(b, 0, sa->udata);
-    skiparray_free(sa, cb, udata);
+    skiparray_free(sa);
 }
 
 enum skiparray_builder_append_res

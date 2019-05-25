@@ -57,12 +57,13 @@ skiparray_fold_multi_init(enum skiparray_fold_type type,
         return SKIPARRAY_FOLD_ERROR_MISUSE;
     }
 
-    /* All skiparrays must have the same cmp and mem callbacks,
+    /* All skiparrays must have the same cmp, free, and mem callbacks,
      * and either all or none must use values. */
     for (size_t i = 0; i < skiparray_count; i++) {
         if (skiparrays[i] == NULL
             || skiparrays[i]->cmp != skiparrays[0]->cmp
             || skiparrays[i]->mem != skiparrays[0]->mem
+            || skiparrays[i]->free != skiparrays[0]->free
             || skiparrays[i]->use_values != skiparrays[0]->use_values) {
             return SKIPARRAY_FOLD_ERROR_MISUSE;
         }
@@ -117,6 +118,7 @@ skiparray_fold_multi_init(enum skiparray_fold_type type,
     res->cbs.mem = mem;
     res->cbs.sa_udata = sa_udata;
     res->cbs.cmp = skiparrays[0]->cmp;
+    res->cbs.free = skiparrays[0]->free;
     res->cbs.merge = merge;
 
     assert(res->iter_count == skiparray_count);

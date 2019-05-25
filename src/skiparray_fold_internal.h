@@ -20,6 +20,7 @@ struct skiparray_fold_state {
         void *fold_udata;
 
         skiparray_cmp_fun *cmp;
+        skiparray_free_fun *free;
         skiparray_fold_merge_fun *merge;
         skiparray_memory_fun *mem;
         void *sa_udata;

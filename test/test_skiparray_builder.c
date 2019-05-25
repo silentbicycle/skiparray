@@ -39,7 +39,7 @@ TEST reject_descending_key(void) {
     ASSERT_EQ_FMT(SKIPARRAY_BUILDER_APPEND_ERROR_MISUSE,
         skiparray_builder_append(b, (void *)k0, NULL), "%d");
 
-    skiparray_builder_free(b, NULL, NULL);
+    skiparray_builder_free(b);
     PASS();
 }
 
@@ -56,7 +56,7 @@ TEST reject_equal_key(void) {
     ASSERT_EQ_FMT(SKIPARRAY_BUILDER_APPEND_ERROR_MISUSE,
         skiparray_builder_append(b, (void *)k1, NULL), "%d");
 
-    skiparray_builder_free(b, NULL, NULL);
+    skiparray_builder_free(b);
     PASS();
 }
 
@@ -88,7 +88,7 @@ TEST build_ascending(size_t limit) {
         ASSERT_EQ_FMT(exp, v, "%"PRIuPTR);
     }
 
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
     PASS();
 }
 

@@ -25,6 +25,11 @@ skiparray(s) will be locked during the fold.
 Added `skiparray_filter`, which produces a filtered shallow copy of
 another skiparray using a predicate function.
 
+Moved the `free` callback (previously an argument to `skiparray_free`
+and `skiparray_builder_free`) into the `skiparray_config` struct,
+since (like `cmp` and the other callbacks) it shouldn't change over
+the lifetime of the skiparray.
+
 
 ### Bug Fixes
 

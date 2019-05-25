@@ -52,7 +52,7 @@ TEST sub_forward_and_reverse(size_t limit) {
         ASSERT_EQ_FMT(expected, acc, "%zu");
     }
 
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
     PASS();
 }
 
@@ -108,7 +108,7 @@ TEST sub_forward_and_reverse_halt_partway(size_t limit) {
         ASSERT_EQ_FMT(expected, acc, "%zu");
     }
 
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
     PASS();
 }
 
@@ -211,7 +211,7 @@ TEST fold_multi_and_check_merge(size_t limit) {
 
     /* Free the merged skiparrays */
     for (size_t m_i = 0; m_i < MUL_CT; m_i++) {
-        skiparray_free(sas[m_i], NULL, NULL);
+        skiparray_free(sas[m_i]);
     }
 
     {
@@ -237,7 +237,7 @@ TEST fold_multi_and_check_merge(size_t limit) {
         skiparray_iter_free(iter);
     }
 
-    skiparray_free(res, NULL, NULL);
+    skiparray_free(res);
     PASS();
 }
 
@@ -261,7 +261,7 @@ TEST onepass_sum(size_t limit) {
             sa, sum_values, &actual), "%d");
     ASSERT_EQ_FMT(exp, actual, "%zu");
 
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
     PASS();
 }
 
@@ -275,7 +275,7 @@ TEST iter_empty(void) {
             sa, sum_values, &actual), "%d");
     ASSERT_EQ_FMT(exp, actual, "%zu");
 
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
     PASS();
 }
 

@@ -17,6 +17,7 @@ struct skiparray {
 
     skiparray_memory_fun * const mem;
     skiparray_cmp_fun * const cmp;
+    skiparray_free_fun * const free;
     skiparray_level_fun * const level;
     void *udata;
 

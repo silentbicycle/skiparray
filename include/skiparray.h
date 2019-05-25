@@ -59,6 +59,11 @@ typedef void *skiparray_memory_fun(void *p, size_t nsize, void *udata);
 typedef int skiparray_cmp_fun(const void *ka,
     const void *kb, void *udata);
 
+/* Callback for freeing keys and/or values in a skiparray, as its
+ * structure is freed. */
+typedef void skiparray_free_fun(void *key,
+    void *value, void *udata);
+
 /* Return the level for a new skiparray node (0 <= X < max_level).
  * This should be calculated based on PRNG_STATE_IN (or similar state
  * in UDATA), and update *PRNG_STATE_OUT or UDATA to a new random
@@ -87,6 +92,7 @@ struct skiparray_config {
 
     skiparray_cmp_fun *cmp;       /* required */
     skiparray_memory_fun *memory; /* optional */
+    skiparray_free_fun *free;     /* optional */
     skiparray_level_fun *level;   /* optional */
     void *udata;                  /* callback data, opaque to library */
 };
@@ -102,13 +108,11 @@ enum skiparray_new_res
 skiparray_new(const struct skiparray_config *config,
     struct skiparray **sa);
 
-/* Free a skiparray. If CB is non-NULL, then it will be called with
- * every key, value pair and udata. Any iterators associated with this
- * skiparray will be freed, and pointers to them will become stale. */
-typedef void skiparray_free_fun(void *key,
-    void *value, void *udata);
-void skiparray_free(struct skiparray *sa,
-    skiparray_free_fun *cb, void *udata);
+/* Free a skiparray. If the skiparray's configuration's free callback
+ * was non-NULL, then it will be called with every key, value pair and
+ * udata. Any iterators associated with this skiparray will be freed,
+ * and pointers to them will become stale. */
+void skiparray_free(struct skiparray *sa);
 
 /* Get the value associated with a key.
  * Returns whether the value was found. */
@@ -302,8 +306,7 @@ skiparray_builder_new(const struct skiparray_config *cfg,
 
 /* Free (and abandon) a skiparray that is still being built. */
 void
-skiparray_builder_free(struct skiparray_builder *b,
-    skiparray_free_fun *cb, void *udata);
+skiparray_builder_free(struct skiparray_builder *b);
 
 /* Append a key/value pair with the builder. The key should be > the
  * previous key, according to the builder's comparison function.
@@ -391,9 +394,9 @@ skiparray_fold(enum skiparray_fold_type direction,
  * As this is built on top of the iteration API, all the skiparrays
  * will be locked while the fold is active.
  *
- * Calling this on skiparrays with non-matching cmp or memory callbacks
- * will return ERROR_MISUSE. Similarly, either all or none of them must
- * use values. */
+ * Calling this on skiparrays with non-matching cmp, free, or memory
+ * callbacks will return ERROR_MISUSE. Similarly, either all or none of
+ * them must use values. */
 enum skiparray_fold_res
 skiparray_fold_multi_init(enum skiparray_fold_type direction,
     uint8_t skiparray_count, struct skiparray **skiparrays,

@@ -43,8 +43,8 @@ TEST filter_odds_or_evens(int parity) {
             matches_parity, (void *)&env), "%d");
     ASSERT(env.ok);
 
-    skiparray_free(sa, NULL, NULL);
-    skiparray_free(filtered, NULL, NULL);
+    skiparray_free(sa);
+    skiparray_free(filtered);
     PASS();
 }
 

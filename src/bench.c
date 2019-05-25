@@ -194,7 +194,7 @@ get_sequential(size_t limit) {
     TIME(post);
 
     TDIFF();
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
 }
 
 /* Measure getting existing values (successful lookup). */
@@ -212,7 +212,7 @@ get_random_access(size_t limit) {
     TIME(post);
 
     TDIFF();
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
 }
 
 /* Same, but only use keys. */
@@ -228,7 +228,7 @@ get_random_access_no_values(size_t limit) {
     TIME(post);
 
     TDIFF();
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
 }
 
 /* Measure getting _nonexistent_ values (lookup failure). */
@@ -246,7 +246,7 @@ get_nonexistent(size_t limit) {
     TIME(post);
 
     TDIFF();
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
 }
 
 static void
@@ -259,7 +259,7 @@ count(size_t limit) {
     TIME(post);
 
     TDIFF();
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
 }
 
 static void
@@ -276,7 +276,7 @@ set_sequential(size_t limit) {
     TIME(post);
 
     TDIFF();
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
 }
 
 static void
@@ -300,7 +300,7 @@ set_sequential_builder(size_t limit) {
     TIME(post);
 
     TDIFF();
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
 }
 
 static void
@@ -324,7 +324,7 @@ set_sequential_builder_no_chk(size_t limit) {
     TIME(post);
 
     TDIFF();
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
 }
 
 static void
@@ -341,7 +341,7 @@ set_random_access(size_t limit) {
     TIME(post);
 
     TDIFF();
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
 }
 
 static void
@@ -358,7 +358,7 @@ set_random_access_no_values(size_t limit) {
     TIME(post);
 
     TDIFF();
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
 }
 
 static void
@@ -373,7 +373,7 @@ set_replacing_sequential(size_t limit) {
     TIME(post);
 
     TDIFF();
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
 }
 
 static void
@@ -388,7 +388,7 @@ set_replacing_random_access(size_t limit) {
     TIME(post);
 
     TDIFF();
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
 }
 
 static void
@@ -403,7 +403,7 @@ forget_sequential(size_t limit) {
     TIME(post);
 
     TDIFF();
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
 }
 
 static void
@@ -418,7 +418,7 @@ forget_random_access(size_t limit) {
     TIME(post);
 
     TDIFF();
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
 }
 
 static void
@@ -433,7 +433,7 @@ forget_random_access_no_values(size_t limit) {
     TIME(post);
 
     TDIFF();
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
 }
 
 static void
@@ -448,7 +448,7 @@ forget_nonexistent(size_t limit) {
     TIME(post);
 
     TDIFF();
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
 }
 
 static void
@@ -468,7 +468,7 @@ pop_first(size_t limit) {
     TIME(post);
 
     TDIFF();
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
 }
 
 static void
@@ -486,7 +486,7 @@ pop_last(size_t limit) {
     TIME(post);
 
     TDIFF();
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
 }
 
 static void
@@ -500,7 +500,7 @@ member_sequential(size_t limit) {
     TIME(post);
 
     TDIFF();
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
 }
 
 static void
@@ -515,7 +515,7 @@ member_random_access(size_t limit) {
     TIME(post);
 
     TDIFF();
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
 }
 
 static void
@@ -550,7 +550,7 @@ sum(size_t limit) {
 
     TIME(post);
     TDIFF();
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
 
     assert(total == actual);
 }
@@ -589,7 +589,7 @@ sum_partway(size_t limit) {
 
     TIME(post);
     TDIFF();
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
 }
 
 typedef void

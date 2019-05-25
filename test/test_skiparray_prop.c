@@ -120,7 +120,7 @@ prop_preserve_invariants(struct theft *t, void *arg1) {
         if (!validate(m)) { goto fail; }
     }
 
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
     free(m);
     return THEFT_TRIAL_PASS;
 
@@ -559,7 +559,7 @@ TEST regression(void) {
     GET(8, 0);
     GET(3, 0);
 
-    skiparray_free(sa, NULL, NULL);
+    skiparray_free(sa);
     PASS();
 }
 

@@ -38,6 +38,7 @@ skiparray_filter(struct skiparray *sa,
             .ignore_values = !sa->use_values,
             .cmp = sa->cmp,
             .memory = sa->mem,
+            .free = sa->free,
             .level = sa->level,
             .udata = sa->udata,
         };
@@ -56,12 +57,12 @@ skiparray_filter(struct skiparray *sa,
 
     if (SKIPARRAY_FOLD_OK != skiparray_fold(SKIPARRAY_FOLD_LEFT,
             sa, filter_append, &env)) {
-        skiparray_builder_free(b, NULL, NULL);
+        skiparray_builder_free(b);
         return NULL;
     }
 
     if (env.ok != true) {
-        skiparray_builder_free(b, NULL, NULL);
+        skiparray_builder_free(b);
         return NULL;
     }
 
