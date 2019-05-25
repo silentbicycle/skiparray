@@ -3,6 +3,8 @@
 
 #include "skiparray_internal_types.h"
 
+/* #define SKIPARRAY_LOG_FOLD */
+
 enum pair_state {
     PS_NONE,                    /* entry is not currently in use */
     PS_AVAILABLE_LT,            /* entry is < next, or last */
