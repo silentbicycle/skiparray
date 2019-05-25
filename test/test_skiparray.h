@@ -15,6 +15,7 @@ SUITE_EXTERN(basic);
 SUITE_EXTERN(builder);
 SUITE_EXTERN(fold);
 SUITE_EXTERN(prop);
+SUITE_EXTERN(hof);
 SUITE_EXTERN(integration);
 
 struct test_env {

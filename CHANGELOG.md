@@ -22,6 +22,9 @@ callback will be called to merge the options to a single (key, value)
 pair first. This is built on top of the iteration interface, so the
 skiparray(s) will be locked during the fold.
 
+Added `skiparray_filter`, which produces a filtered shallow copy of
+another skiparray using a predicate function.
+
 
 ### Bug Fixes
 

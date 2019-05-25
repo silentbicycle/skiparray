@@ -414,4 +414,18 @@ enum skiparray_fold_next_res {
 enum skiparray_fold_next_res
 skiparray_fold_next(struct skiparray_fold_state *fs);
 
+/* Filter function: given a key/value pair, indicate whether to add it
+ * to the skiparray that skiparray_filter is buliding. */
+typedef bool
+skiparray_filter_fun(const void *key, const void *value, void *udata);
+
+/* Allocate a new skiparray, containing a subset of another's
+ * key/value pairs. The new skiparray will have the same comparison
+ * and memory callbacks as the original.
+ *
+ * Returns NULL on allocation failure, or the new skiparray. */
+struct skiparray *
+skiparray_filter(struct skiparray *sa,
+    skiparray_filter_fun *fun, void *udata);
+
 #endif
