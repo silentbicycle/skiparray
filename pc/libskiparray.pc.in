@@ -4,7 +4,7 @@ includedir=${prefix}/include
 
 Name: skiparray
 Description: Unrolled skip list library for C
-Version: 0.1.1
+Version: 0.2.0
 Requires:
 Libs: -L${libdir} -lskiparray
 Libs.private:

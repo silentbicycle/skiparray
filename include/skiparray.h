@@ -21,10 +21,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-/* Version 0.1.1 */
+/* Version 0.2.0 */
 #define SKIPARRAY_VERSION_MAJOR 0
-#define SKIPARRAY_VERSION_MINOR 1
-#define SKIPARRAY_VERSION_PATCH 1
+#define SKIPARRAY_VERSION_MINOR 2
+#define SKIPARRAY_VERSION_PATCH 0
 
 /* Default level limit as the skiparray grows. */
 #define SKIPARRAY_DEF_MAX_LEVEL 16
