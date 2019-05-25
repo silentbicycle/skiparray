@@ -265,6 +265,20 @@ TEST onepass_sum(size_t limit) {
     PASS();
 }
 
+TEST iter_empty(void) {
+    struct skiparray *sa = test_skiparray_sequential_build(0);
+
+    size_t exp = 0;
+    size_t actual = 0;
+    ASSERT_EQ_FMT(SKIPARRAY_FOLD_OK,
+        skiparray_fold(SKIPARRAY_FOLD_LEFT,
+            sa, sum_values, &actual), "%d");
+    ASSERT_EQ_FMT(exp, actual, "%zu");
+
+    skiparray_free(sa, NULL, NULL);
+    PASS();
+}
+
 SUITE(fold) {
     for (size_t limit = 10; limit <= 1000000; limit *= 10) {
         char buf[64];
@@ -281,4 +295,6 @@ SUITE(fold) {
         SET_SUFFIX();
         RUN_TESTp(onepass_sum, limit);
     }
+
+    RUN_TEST(iter_empty);
 }

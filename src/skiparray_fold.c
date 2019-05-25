@@ -84,6 +84,7 @@ skiparray_fold_multi_init(enum skiparray_fold_type type,
     if (current_ids == NULL) { goto cleanup; }
     memset(current_ids, 0x00, current_ids_alloc_size);
 
+    uint8_t live_count = 0;
     for (size_t i = 0; i < skiparray_count; i++) {
         struct skiparray_iter *iter = NULL;
         enum skiparray_iter_new_res ires;
@@ -94,7 +95,9 @@ skiparray_fold_multi_init(enum skiparray_fold_type type,
         case SKIPARRAY_ITER_NEW_ERROR_MEMORY:
             goto cleanup;
         case SKIPARRAY_ITER_NEW_EMPTY:
+            break;
         case SKIPARRAY_ITER_NEW_OK:
+            live_count++;
             break;                  /* continue below */
         }
 
@@ -117,7 +120,7 @@ skiparray_fold_multi_init(enum skiparray_fold_type type,
     res->cbs.merge = merge;
 
     assert(res->iter_count == skiparray_count);
-    res->iter_live = res->iter_count;
+    res->iter_live = live_count;
 
     res->ids.current = current_ids;
 
